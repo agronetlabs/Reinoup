@@ -1,4 +1,10 @@
 import { mkdir, writeFile } from 'node:fs/promises';
+import { getDaviGoliasScenes } from './story-art/davi-golias.mjs';
+import { getArcaDeNoeScenes } from './story-art/arca-de-noe.mjs';
+import { getJoseSeusIrmaosScenes } from './story-art/jose-e-seus-irmaos.mjs';
+import { getMoisesMarVermelhoScenes } from './story-art/moises-mar-vermelho.mjs';
+import { getJonasGrandePeixeScenes } from './story-art/jonas-grande-peixe.mjs';
+import { getDanielCovaDosLeoesScenes } from './story-art/daniel-cova-dos-leoes.mjs';
 
 const out = new URL('../public/story-art/genesis/gn-01/', import.meta.url);
 await mkdir(out, { recursive: true });
@@ -160,3 +166,27 @@ for (const [name, content] of Object.entries(scenes)) {
   await writeFile(new URL(name, out), content, 'utf8');
   console.log(`  story-art/genesis/gn-01/${name}`);
 }
+
+// ============================================================
+// 2. Histórias Bônus
+// ============================================================
+const stories = [
+  { folder: 'davi-golias', getScenes: getDaviGoliasScenes },
+  { folder: 'arca-de-noe', getScenes: getArcaDeNoeScenes },
+  { folder: 'jose-e-seus-irmaos', getScenes: getJoseSeusIrmaosScenes },
+  { folder: 'moises-mar-vermelho', getScenes: getMoisesMarVermelhoScenes },
+  { folder: 'jonas-grande-peixe', getScenes: getJonasGrandePeixeScenes },
+  { folder: 'daniel-cova-dos-leoes', getScenes: getDanielCovaDosLeoesScenes },
+];
+
+for (const { folder, getScenes } of stories) {
+  const targetDir = new URL(`../public/story-art/bonus/${folder}/`, import.meta.url);
+  await mkdir(targetDir, { recursive: true });
+  const bonusScenes = getScenes();
+  for (const [name, content] of Object.entries(bonusScenes)) {
+    await writeFile(new URL(name, targetDir), content, 'utf8');
+    console.log(`  story-art/bonus/${folder}/${name}`);
+  }
+}
+
+console.log('✓ Todas as 42 ilustrações de histórias geradas com sucesso!');
