@@ -8,6 +8,7 @@ import { ChoiceCard } from '../../components/ui/ChoiceCard';
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
 import { getStory } from '../../content/stories';
 import { useProgressStore } from '../../store/progressStore';
+import { sfx } from '../../lib/sfx';
 
 export function Quiz() {
   const { storyId } = useParams<{ storyId: string }>();
@@ -36,6 +37,12 @@ export function Quiz() {
     setSelected(optIndex);
     setRevealed(true);
     const isCorrect = optIndex === question.correctIndex;
+
+    if (isCorrect) {
+      sfx.success();
+    } else {
+      sfx.retry();
+    }
 
     setFirstAttempt((prev) => (currentQIndex in prev ? prev : { ...prev, [currentQIndex]: isCorrect }));
 

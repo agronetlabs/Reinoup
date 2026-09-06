@@ -5,6 +5,7 @@ import { BrandIcon, type BrandIconName } from '../../components/illustrations/Br
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
 import { useProgressStore } from '../../store/progressStore';
 import { SHIELD_COST_COINS } from '../../lib/economy';
+import { sfx } from '../../lib/sfx';
 
 /**
  * Desafios diários — construída a partir da tela 10 do mockup.
@@ -107,7 +108,10 @@ export function DailyChallenges() {
           {shieldsAvailable < 2 && (
             <button
               disabled={coins < SHIELD_COST_COINS}
-              onClick={buyShield}
+              onClick={() => {
+                buyShield();
+                sfx.coin();
+              }}
               className="mt-4 min-h-11 w-full rounded-[var(--radius-lg)] border border-navy/10 px-4 py-2.5 text-sm font-bold text-navy disabled:opacity-40"
             >
               Comprar escudo extra ({SHIELD_COST_COINS} moedas)

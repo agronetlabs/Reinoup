@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { MascotOficial } from '../../components/mascot/MascotOficial';
 import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useProgressStore } from '../../store/progressStore';
+import { sfx } from '../../lib/sfx';
 
 export function RewardChest() {
   const navigate = useNavigate();
@@ -22,6 +23,10 @@ export function RewardChest() {
     const id = setTimeout(() => {
       setReward(r);
       setOpening(false);
+      if (r) {
+        sfx.chestOpen();
+        setTimeout(() => sfx.coin(), 350);
+      }
     }, 900);
     return () => clearTimeout(id);
   }, [openDailyChest]);

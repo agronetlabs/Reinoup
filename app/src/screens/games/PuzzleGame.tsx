@@ -7,6 +7,7 @@ import { Scene } from '../../components/illustrations/Scene';
 import { UnlockedStoryPicker } from '../../components/games/UnlockedStoryPicker';
 import { getStory } from '../../content/stories';
 import { useProgressStore } from '../../store/progressStore';
+import { sfx } from '../../lib/sfx';
 
 const GRID = 3;
 const BOARD_SIZE = 300;
@@ -45,12 +46,15 @@ export function PuzzleGame() {
   useEffect(() => {
     if (solved && story && !won) {
       setWon(true);
+      sfx.success();
+      setTimeout(() => sfx.coin(), 350);
       recordGameWin(`Quebra-Cabeça — ${story.title}`);
     }
   }, [solved, story, won, recordGameWin]);
 
   function handleTap(cell: number) {
     if (won) return;
+    sfx.tap();
     if (selected === null) {
       setSelected(cell);
       return;

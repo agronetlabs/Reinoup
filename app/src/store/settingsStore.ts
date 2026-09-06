@@ -30,11 +30,13 @@ interface SettingsState {
   allowedDays: WeekdayCode[];
   pausedManually: boolean;
   notifications: NotificationToggles;
+  soundEffectsEnabled: boolean;
   plan: 'essencial' | 'completo' | 'familia' | null;
   billingCycle: 'mensal' | 'anual';
 
   setAgeBand: (b: AgeBand) => void;
   toggleContent: (key: keyof ContentToggles) => void;
+  toggleSoundEffects: () => void;
   setScreenTimeEnabled: (enabled: boolean) => void;
   setDailyTimeLimit: (min: number) => void;
   setAllowedHours: (from: string, to: string) => void;
@@ -67,11 +69,13 @@ export const useSettingsStore = create<SettingsState>()(
         relatorioSemanal: true,
         novosConteudos: true,
       },
+      soundEffectsEnabled: true,
       plan: null,
       billingCycle: 'mensal',
 
       setAgeBand: (b) => set({ ageBand: b }),
       toggleContent: (key) => set((s) => ({ contentToggles: { ...s.contentToggles, [key]: !s.contentToggles[key] } })),
+      toggleSoundEffects: () => set((s) => ({ soundEffectsEnabled: !(s.soundEffectsEnabled ?? true) })),
       setScreenTimeEnabled: (enabled) => set({ screenTimeEnabled: enabled }),
       setDailyTimeLimit: (min) => set({ dailyTimeLimitMin: Math.max(10, Math.min(240, min)) }),
       setAllowedHours: (from, to) => set({ allowedFrom: from, allowedTo: to }),

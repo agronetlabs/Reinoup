@@ -10,14 +10,15 @@ import { Scene } from '../../components/illustrations/Scene';
 import { getStory, pagesForAge } from '../../content/stories';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore } from '../../store/settingsStore';
-import { useSpeech } from '../../hooks/useSpeech';
+import { useStoryAudio } from '../../hooks/useStoryAudio';
+import { getStoryAudioPath } from '../../lib/story-audio';
 
 export function ChapterReader() {
   const { storyId, chapterIndex: chapterIndexParam } = useParams<{ storyId: string; chapterIndex: string }>();
   const navigate = useNavigate();
   const completeChapter = useProgressStore((s) => s.completeChapter);
   const recordChoice = useProgressStore((s) => s.recordChoice);
-  const { speak, stop, speaking } = useSpeech();
+  const { play, stop, isPlaying, isStudioAudio } = useStoryAudio();
   const ageBand = useSettingsStore((s) => s.ageBand);
 
   const story = storyId ? getStory(storyId) : undefined;
@@ -107,14 +108,29 @@ export function ChapterReader() {
       <div className="mt-4 flex items-center gap-3 border-t border-navy/10 px-4 pt-4">
         {!atChoiceStep && (
           <button
-            onClick={() => (speaking ? stop() : speak(pages[pageIndex]))}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange text-white shadow-[0_6px_0_0_var(--color-orange-dark)]"
-            aria-label="Narrar"
+            onClick={() => {
+              if (isPlaying) {
+                stop();
+              } else {
+                const audioUrl = getStoryAudioPath(story.id, chapter.id, pageIndex, ageBand);
+                play(audioUrl, pages[pageIndex]);
+              }
+            }}
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange text-white shadow-[0_6px_0_0_var(--color-orange-dark)] transition active:scale-95"
+            aria-label={isPlaying ? 'Pausar narração' : 'Ouvir narração'}
           >
-            {speaking ? '⏸️' : '▶️'}
+            {isPlaying ? '⏸️' : '▶️'}
           </button>
         )}
-        {!atChoiceStep && <p className="flex-1 text-sm font-semibold text-navy/50">{speaking ? 'Narrando...' : 'Toque para ouvir'}</p>}
+        {!atChoiceStep && (
+          <p className="flex-1 text-sm font-semibold text-navy/50">
+            {isPlaying
+              ? isStudioAudio
+                ? 'Ouvindo narração de estúdio...'
+                : 'Narrando...'
+              : 'Toque para ouvir'}
+          </p>
+        )}
         <Button
           onClick={handleNext}
           disabled={atChoiceStep && (choiceIndex === null || !revealed)}
