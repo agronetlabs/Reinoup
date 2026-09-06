@@ -5,6 +5,7 @@ import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../store/authStore';
 import { unlockParentArea } from '../../lib/parent-session';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 
 export function ParentPinGate() {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ export function ParentPinGate() {
     <div className="flex min-h-screen flex-col bg-navy text-white">
       <TopBar dark backTo="/app/perfil" />
       <div className="flex flex-1 flex-col items-center justify-center gap-5 px-8 text-center">
-        <span className="text-4xl">🔒</span>
+        <BrandIcon name="protecao" size={40} className="brightness-0 invert" />
         <h1 className="font-display text-2xl font-extrabold">{title}</h1>
         <p className="max-w-xs text-white/70">
           {step === 'enter' ? 'Use uma combinação que a criança não sabe.' : 'Escolha 4 números que só você lembra.'}

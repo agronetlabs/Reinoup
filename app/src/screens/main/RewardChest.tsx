@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { MascotOficial } from '../../components/mascot/MascotOficial';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useProgressStore } from '../../store/progressStore';
 
 export function RewardChest() {
@@ -35,7 +36,7 @@ export function RewardChest() {
           transition={{ duration: opening ? 0.6 : 0.5, repeat: opening ? Infinity : 0 }}
           className="text-8xl"
         >
-          {opening ? '📦' : '🎁'}
+          <BrandIcon name="recompensas" size={112} className="text-gold" />
         </motion.div>
 
         {!opening && (

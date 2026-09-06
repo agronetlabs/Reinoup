@@ -5,6 +5,7 @@ import { Mascot } from '../../components/mascot/Mascot';
 import { useProgressStore } from '../../store/progressStore';
 import { AVATAR_ITEMS, itemsByKind, getAvatarItem, type AvatarItemKind } from '../../content/avatar-items';
 import { getBadge } from '../../content/badges';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 
 const TABS: { kind: AvatarItemKind; label: string }[] = [
   { kind: 'outfit', label: 'Roupas' },
@@ -89,9 +90,15 @@ export function Avatar() {
                 style={{ background: item.kind === 'accessory' ? '#EFE6D2' : item.value }}
               />
               <span className="text-center text-[10px] font-bold leading-tight text-navy">{item.label}</span>
-              {!owned && item.unlock.type === 'coins' && <span className="text-[10px] font-bold text-orange-dark">{item.unlock.cost}🪙</span>}
+              {!owned && item.unlock.type === 'coins' && (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-orange-dark">
+                  {item.unlock.cost} <BrandIcon name="recompensas" size={12} />
+                </span>
+              )}
               {item.unlock.type === 'badge' && !owned && (
-                <span className="text-[10px] font-bold text-navy/40">🔒 {getBadge(item.unlock.badgeId)?.name}</span>
+                <span className="flex items-center gap-1 text-[10px] font-bold text-navy/40">
+                  <BrandIcon name="protecao" size={12} /> {getBadge(item.unlock.badgeId)?.name}
+                </span>
               )}
             </button>
           );

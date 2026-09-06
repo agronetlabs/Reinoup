@@ -2,6 +2,7 @@
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { Scene } from '../../components/illustrations/Scene';
 import { getStory, motivoDeBloqueio } from '../../content/stories';
 import { useAssinatura } from '../../lib/assinatura';
@@ -41,7 +42,7 @@ export function StoryCover() {
             backTo="/app/historias"
             right={
               <button onClick={() => setFavorite((v) => !v)} className="text-2xl" aria-label="Favoritar">
-                {favorite ? '❤️' : '🤍'}
+                <BrandIcon name="amor" size={24} className={favorite ? '' : 'opacity-50'} />
               </button>
             }
           />
@@ -70,4 +71,3 @@ export function StoryCover() {
     </div>
   );
 }
-

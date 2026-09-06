@@ -3,6 +3,7 @@ import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { ORDER_SEQUENCES, type OrderSequence } from '../../content/order-sequences';
 import { useProgressStore } from '../../store/progressStore';
 
@@ -26,7 +27,7 @@ function Picker({ onPick }: { onPick: (seq: OrderSequence) => void }) {
           <button key={seq.id} disabled={locked} onClick={() => onPick(seq)} className="text-left disabled:opacity-40">
             <Card className="flex items-center justify-between">
               <p className="font-display font-bold text-navy">{seq.title}</p>
-              {locked && <span>🔒</span>}
+              {locked && <BrandIcon name="protecao" size={22} className="opacity-50" />}
             </Card>
           </button>
         );

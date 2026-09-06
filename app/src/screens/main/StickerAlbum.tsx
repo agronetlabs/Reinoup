@@ -1,6 +1,7 @@
 import { TopBar } from '../../components/ui/TopBar';
 import { MotifIcon } from '../../components/illustrations/MotifIcon';
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useProgressStore } from '../../store/progressStore';
 import type { Motif } from '../../content/types';
 
@@ -35,7 +36,7 @@ export function StickerAlbum() {
                   unlocked ? 'border-gold bg-white' : 'border-navy/10 bg-navy/5'
                 }`}
               >
-                {unlocked ? <MotifIcon motif={motif} size={44} /> : <span className="text-xl opacity-30">🔒</span>}
+                {unlocked ? <MotifIcon motif={motif} size={44} /> : <BrandIcon name="protecao" size={22} className="opacity-30" />}
               </div>
             );
           })}

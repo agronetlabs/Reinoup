@@ -6,14 +6,15 @@ import { useAuthStore } from '../../store/authStore';
 import { useProgressStore } from '../../store/progressStore';
 import { MISSIONS } from '../../content/missions';
 import { lockParentArea } from '../../lib/parent-session';
+import { BrandIcon, type BrandIconName } from '../../components/illustrations/BrandIcon';
 
 const MENU = [
-  { to: '/pais/relatorio', label: 'Relatório de atividades', icon: '📋' },
-  { to: '/pais/conteudo', label: 'Gerenciar conteúdo', icon: '💬' },
-  { to: '/pais/tempo-de-uso', label: 'Tempo de uso', icon: '⏱️' },
-  { to: '/pais/notificacoes', label: 'Notificações', icon: '🔔' },
-  { to: '/pais/configuracoes', label: 'Configurações', icon: '⚙️' },
-];
+  { to: '/pais/relatorio', label: 'Relatório de atividades', icon: 'progresso' },
+  { to: '/pais/conteudo', label: 'Gerenciar conteúdo', icon: 'licoes' },
+  { to: '/pais/tempo-de-uso', label: 'Tempo de uso', icon: 'progresso' },
+  { to: '/pais/notificacoes', label: 'Notificações', icon: 'desafios' },
+  { to: '/pais/configuracoes', label: 'Configurações', icon: 'protecao' },
+] satisfies { to: string; label: string; icon: BrandIconName }[];
 
 export function ParentHome() {
   const navigate = useNavigate();
@@ -76,14 +77,14 @@ export function ParentHome() {
           </Card>
         )}
 
-        <div className="overflow-hidden rounded-[var(--radius-card)] bg-white shadow-[var(--shadow-card)]">
+        <div className="overflow-hidden rounded-[var(--radius-md)] border border-border-default bg-surface-default shadow-[var(--shadow-card)]">
           {MENU.map((item, i) => (
             <Link
               key={item.to}
               to={item.to}
-              className={`flex items-center gap-3 px-4 py-4 ${i !== MENU.length - 1 ? 'border-b border-navy/10' : ''}`}
+              className={`flex min-h-12 items-center gap-3 px-4 py-4 ${i !== MENU.length - 1 ? 'border-b border-navy/10' : ''}`}
             >
-              <span className="text-xl">{item.icon}</span>
+              <BrandIcon name={item.icon} size={22} />
               <span className="flex-1 font-semibold text-navy">{item.label}</span>
               <span className="text-navy/40">›</span>
             </Link>

@@ -1,12 +1,13 @@
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { useSettingsStore, type NotificationToggles } from '../../store/settingsStore';
+import { BrandIcon, type BrandIconName } from '../../components/illustrations/BrandIcon';
 
-const ITEMS: { key: keyof NotificationToggles; title: string; subtitle: string; icon: string }[] = [
-  { key: 'desafiosDiarios', title: 'Desafios diários', subtitle: 'Lembrar do desafio do dia', icon: '⏰' },
-  { key: 'versiculoDoDia', title: 'Versículo do dia', subtitle: 'Notificação diária', icon: '🔔' },
-  { key: 'relatorioSemanal', title: 'Relatório semanal', subtitle: 'Resumo das atividades', icon: '🎓' },
-  { key: 'novosConteudos', title: 'Novos conteúdos', subtitle: 'Histórias e jogos novos', icon: '⏳' },
+const ITEMS: { key: keyof NotificationToggles; title: string; subtitle: string; icon: BrandIconName }[] = [
+  { key: 'desafiosDiarios', title: 'Desafios diários', subtitle: 'Lembrar do desafio do dia', icon: 'desafios' },
+  { key: 'versiculoDoDia', title: 'Versículo do dia', subtitle: 'Notificação diária', icon: 'fe' },
+  { key: 'relatorioSemanal', title: 'Relatório semanal', subtitle: 'Resumo das atividades', icon: 'progresso' },
+  { key: 'novosConteudos', title: 'Novos conteúdos', subtitle: 'Histórias e jogos novos', icon: 'licoes' },
 ];
 
 export function Notifications() {
@@ -26,7 +27,7 @@ export function Notifications() {
       <div className="flex flex-col gap-3 px-4">
         {ITEMS.map((item) => (
           <Card key={item.key} className="flex items-center gap-3">
-            <span className="text-xl">{item.icon}</span>
+            <BrandIcon name={item.icon} size={22} />
             <div className="flex-1">
               <p className="font-display font-bold text-navy">{item.title}</p>
               <p className="text-sm text-navy/60">{item.subtitle}</p>

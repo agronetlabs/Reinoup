@@ -1,6 +1,7 @@
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { VERSES } from '../../content/verses';
@@ -34,7 +35,7 @@ export function VerseShelf() {
           <div className="flex flex-col gap-3">
             {collected.map((v) => (
               <Card key={v.id} className="flex items-start gap-3">
-                <span className="text-2xl">📜</span>
+                <BrandIcon name="fe" size={26} />
                 <div>
                   <p className="font-display font-bold text-navy">"{v.text[ageBand]}"</p>
                   <p className="mt-1 text-xs font-bold text-orange-dark">

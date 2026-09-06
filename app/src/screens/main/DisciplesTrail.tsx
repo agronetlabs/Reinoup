@@ -3,6 +3,7 @@ import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { DISCIPLES } from '../../content/disciples';
 import { useProgressStore } from '../../store/progressStore';
+import { BrandIcon } from '../../components/illustrations/BrandIcon';
 
 export function DisciplesTrail() {
   const disciplesLearned = useProgressStore((s) => s.disciplesLearned);
@@ -30,8 +31,8 @@ export function DisciplesTrail() {
                 }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy/5 text-lg">
-                    {learned ? '✅' : '❓'}
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${learned ? 'bg-green-light' : 'bg-navy/5'}`}>
+                    <BrandIcon name={learned ? 'fe' : 'protecao'} size={20} className={learned ? '' : 'opacity-40'} />
                   </span>
                   <p className="font-display flex-1 font-bold text-navy">{d.name}</p>
                 </div>
