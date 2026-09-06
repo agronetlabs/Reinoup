@@ -24,12 +24,12 @@ export function ActivityReport() {
     <div className="flex min-h-screen flex-col bg-cream pb-8">
       <TopBar title="Relatório de atividades" backTo="/pais" />
       <div className="flex flex-col gap-4 px-4">
-        <div className="flex items-center justify-center gap-4 rounded-full bg-white px-4 py-2 shadow-[var(--shadow-card)]">
-          <button onClick={() => setWeekOffset((w) => w - 1)} aria-label="Semana anterior">
+        <div className="flex min-h-11 items-center justify-center gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-default px-4 py-2 shadow-[var(--shadow-card)]">
+          <button className="min-h-11 min-w-11 text-xl font-bold text-navy" onClick={() => setWeekOffset((w) => w - 1)} aria-label="Semana anterior">
             ‹
           </button>
           <span className="font-display text-sm font-bold text-navy">{weekOffset === 0 ? 'Esta semana' : weekOffset === -1 ? 'Semana passada' : `${weekOffset} semanas`}</span>
-          <button onClick={() => setWeekOffset((w) => Math.min(0, w + 1))} aria-label="Próxima semana" disabled={weekOffset === 0}>
+          <button className="min-h-11 min-w-11 text-xl font-bold text-navy disabled:opacity-30" onClick={() => setWeekOffset((w) => Math.min(0, w + 1))} aria-label="Próxima semana" disabled={weekOffset === 0}>
             ›
           </button>
         </div>

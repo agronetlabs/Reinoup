@@ -34,6 +34,7 @@ export function Notifications() {
             </div>
             <button
               onClick={() => handleToggle(item.key)}
+              aria-pressed={notifications[item.key]}
               className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${notifications[item.key] ? 'bg-green' : 'bg-navy/15'}`}
             >
               <span

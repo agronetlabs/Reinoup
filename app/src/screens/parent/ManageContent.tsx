@@ -42,7 +42,7 @@ export function ManageContent() {
               <button
                 key={b}
                 onClick={() => setAgeBand(b)}
-                className={`flex-1 rounded-full py-2.5 text-sm font-bold ${ageBand === b ? 'bg-orange text-white' : 'bg-navy/5 text-navy/60'}`}
+                className={`min-h-11 flex-1 rounded-[var(--radius-lg)] py-2.5 text-sm font-bold ${ageBand === b ? 'bg-action-primary-bg text-action-primary-fg' : 'bg-navy/5 text-navy/60'}`}
               >
                 {b} anos
               </button>

@@ -32,6 +32,7 @@ export function ScreenTime() {
           </div>
           <button
             onClick={() => setScreenTimeEnabled(!screenTimeEnabled)}
+            aria-pressed={screenTimeEnabled}
             className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${screenTimeEnabled ? 'bg-green' : 'bg-navy/15'}`}
           >
             <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${screenTimeEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
@@ -86,7 +87,7 @@ export function ScreenTime() {
                 key={d}
                 onClick={() => toggleWeekday(d)}
                 className={`flex h-11 w-11 items-center justify-center rounded-full text-xs font-bold ${
-                  allowedDays.includes(d) ? 'bg-orange text-white' : 'bg-navy/10 text-navy/50'
+                  allowedDays.includes(d) ? 'bg-action-primary-bg text-action-primary-fg' : 'bg-navy/10 text-navy/50'
                 }`}
               >
                 {DAY_LABEL[d]}
@@ -100,6 +101,7 @@ export function ScreenTime() {
           <span className="font-display font-bold text-navy">Pausar o app agora</span>
           <button
             onClick={() => setPaused(!pausedManually)}
+            aria-pressed={pausedManually}
             className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${pausedManually ? 'bg-green' : 'bg-navy/15'}`}
           >
             <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${pausedManually ? 'translate-x-5' : 'translate-x-0.5'}`} />

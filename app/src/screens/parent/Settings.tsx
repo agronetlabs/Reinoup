@@ -33,9 +33,9 @@ export function Settings() {
           </div>
         </Card>
 
-        <button onClick={() => { void sairDaConta(); logout(); }} className="rounded-2xl bg-white p-4 text-center font-display font-bold text-navy shadow-[var(--shadow-card)]">
+        <Button variant="secondary" full onClick={() => { void sairDaConta(); logout(); }}>
           Sair da conta
-        </button>
+        </Button>
       </div>
 
       <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)}>
@@ -56,4 +56,3 @@ export function Settings() {
     </div>
   );
 }
-
