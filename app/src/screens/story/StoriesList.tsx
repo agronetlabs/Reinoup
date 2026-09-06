@@ -80,9 +80,7 @@ export function StoriesList() {
 
                             {bloqueio === 'sequencia' && (
                               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-navy-deep/70 backdrop-blur-[2px]">
-                                <span className="text-3xl" aria-hidden>
-                                  🔒
-                                </span>
+                                <BrandIcon name="protecao" size={30} className="brightness-0 invert" />
                                 <span className="font-display text-xs font-bold text-white/90">
                                   Conclua a fase anterior
                                 </span>
@@ -154,5 +152,4 @@ export function StoriesList() {
     </div>
   );
 }
-
 

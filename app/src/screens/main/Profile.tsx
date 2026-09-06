@@ -87,8 +87,8 @@ function LinhaDoPerfil({ to, icone, titulo, destaque }: { to: string; icone: Bra
   return (
     <Link
       to={to}
-      className={`flex items-center gap-3 rounded-2xl p-4 shadow-[var(--shadow-card)] ${
-        destaque ? 'bg-navy text-white' : 'bg-white'
+      className={`flex min-h-12 items-center gap-3 rounded-[var(--radius-md)] border p-4 shadow-[var(--shadow-card)] ${
+        destaque ? 'border-navy bg-navy text-white' : 'border-border-default bg-surface-default'
       }`}
     >
       <BrandIcon name={icone} size={26} />
@@ -97,4 +97,3 @@ function LinhaDoPerfil({ to, icone, titulo, destaque }: { to: string; icone: Bra
     </Link>
   );
 }
-

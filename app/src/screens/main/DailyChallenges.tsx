@@ -51,7 +51,7 @@ export function DailyChallenges() {
             return (
               <div
                 key={task.id}
-                className={`flex items-center gap-4 rounded-[24px] p-4 shadow-[var(--shadow-card)] ${
+                className={`flex items-center gap-4 rounded-[var(--radius-md)] border border-border-default p-4 shadow-[var(--shadow-card)] ${
                   task.done ? 'bg-green-light/60' : 'bg-white'
                 }`}
               >
@@ -86,7 +86,7 @@ export function DailyChallenges() {
         </div>
 
         {/* ---- ofensiva e escudo ---- */}
-        <div className="rounded-[24px] bg-white p-5 shadow-[var(--shadow-card)]">
+        <div className="rounded-[var(--radius-md)] border border-border-default bg-surface-default p-4 shadow-[var(--shadow-card)]">
           <div className="grid grid-cols-2 divide-x divide-navy/10 text-center">
             <div className="px-2">
               <p className="font-display text-sm font-bold text-navy/60">Sua ofensiva</p>
@@ -108,7 +108,7 @@ export function DailyChallenges() {
             <button
               disabled={coins < SHIELD_COST_COINS}
               onClick={buyShield}
-              className="mt-4 w-full rounded-pill border-2 border-navy/10 py-2.5 text-sm font-bold text-navy disabled:opacity-40"
+              className="mt-4 min-h-11 w-full rounded-[var(--radius-lg)] border border-navy/10 px-4 py-2.5 text-sm font-bold text-navy disabled:opacity-40"
             >
               Comprar escudo extra ({SHIELD_COST_COINS} moedas)
             </button>
@@ -122,7 +122,7 @@ export function DailyChallenges() {
         <button
           disabled={!allDone || dailyChallenge.chestOpened}
           onClick={() => navigate('/app/bau')}
-          className="w-full rounded-pill bg-orange py-4 font-display text-lg font-bold text-white shadow-[0_6px_0_0_var(--color-orange-dark)] active:translate-y-[4px] active:shadow-[0_2px_0_0_var(--color-orange-dark)] disabled:bg-gray disabled:shadow-[0_6px_0_0_var(--color-gray-dark)] disabled:opacity-70"
+          className="min-h-[52px] w-full rounded-[var(--radius-lg)] bg-action-primary-bg py-4 font-display text-lg font-bold text-action-primary-fg shadow-[0_4px_0_0_var(--color-orange-dark)] transition-[transform,box-shadow] duration-150 active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-orange-dark)] disabled:bg-gray-dark disabled:shadow-none disabled:opacity-70"
         >
           {dailyChallenge.chestOpened ? 'Baú de hoje já aberto' : allDone ? 'Ver baú' : 'Complete para abrir o baú'}
         </button>

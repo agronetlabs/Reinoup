@@ -16,16 +16,16 @@
 
   /* Ação */
   --color-orange: #ff7a29;
-  --color-orange-light: #ffa45c;
+  --color-orange-light: #ffaf5c;
 
   /* Neutros */
-  --color-cream: #fffbf0;
-  --color-cream-dark: #f3e9d7;
-  --color-sand: #f3e9d7;
+  --color-cream: #fff9f0;
+  --color-cream-dark: #f3eddc;
+  --color-sand: #f3eddc;
 
   /* Suporte */
-  --color-gray: #b8b8b8;
-  --color-gray-dark: #8e8e8e;
+  --color-gray: #6e6e6e;
+  --color-gray-dark: #a7a39c;
 
   /* ----------------------------------------------------------
    * Derivadas — não estão no brandbook. Existem porque a UI
@@ -44,12 +44,41 @@
    * (sair da conta, excluir dados) na Área dos Pais.
    * Contrastes verificados em AA sobre o creme.
    * ---------------------------------------------------------- */
-  --color-green: #218c5a;
+  --color-green: #2e7d32;
   --color-green-light: #e3f3ea;
   --color-green-dark: #14603c;
   --color-retry: #1d4689;
   --color-retry-soft: #e8eef8;
-  --color-red-soft: #b8442f;
+  --color-red-soft: #d64545;
+
+  /* ==========================================================
+   * Aliases semânticos — componentes usam função, não aparência.
+   * ========================================================== */
+  --color-bg-default: var(--color-cream);
+  --color-surface-default: #ffffff;
+  --color-surface-soft: var(--color-cream-dark);
+  --color-border-default: #e7ddcc;
+  --color-text-primary: var(--color-navy-deep);
+  --color-text-secondary: var(--color-gray);
+  --color-action-primary-bg: var(--color-orange);
+  --color-action-primary-fg: var(--color-navy-deep);
+  --color-action-secondary-bg: var(--color-surface-default);
+  --color-action-secondary-fg: var(--color-navy-deep);
+  --color-reward-bg: var(--color-yellow);
+  --color-focus-ring: var(--color-navy);
+  --color-state-success: #2e7d32;
+  --color-state-error: #d64545;
+
+  /* Escala estrutural de 4 px do Design System. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
 
   --font-display: "Baloo 2", system-ui, sans-serif;
   /* Baloo 2 cansa em parágrafo longo; Nunito é a secundária oficial de corpo. */
@@ -58,8 +87,8 @@
   --radius-card: 1.5rem;
   --radius-pill: 999px;
 
-  --shadow-soft: 0 8px 24px -8px rgba(20, 33, 61, 0.25);
-  --shadow-card: 0 4px 14px -4px rgba(20, 33, 61, 0.15);
+  --shadow-soft: 0 4px 14px rgba(20, 33, 61, 0.08);
+  --shadow-card: 0 4px 14px rgba(20, 33, 61, 0.08);
 }
 
 @layer base {
@@ -90,6 +119,11 @@
     font-family: inherit;
   }
 
+  :focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 3px;
+  }
+
   ::selection {
     background: var(--color-orange-light);
   }
@@ -109,5 +143,16 @@
   }
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -24,6 +24,8 @@ export function ToastHost() {
             initial={{ y: -40, opacity: 0, scale: 0.9 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -20, opacity: 0, scale: 0.95 }}
+            role="status"
+            aria-live="polite"
             className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-2xl bg-navy px-4 py-3 text-white shadow-[var(--shadow-soft)]"
           >
             {t.icon && <span className="text-2xl leading-none">{t.icon}</span>}

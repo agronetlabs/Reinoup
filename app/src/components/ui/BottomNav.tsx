@@ -27,7 +27,7 @@ const TABS: TabDef[] = [
   },
   {
     to: '/app/historias',
-    label: 'Histórias',
+    label: 'Estudos',
     icon: (a) => (
       <IconWrap active={a}>
         <path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z" />

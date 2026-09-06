@@ -105,7 +105,7 @@ export function Home() {
 
           <Link
             to="/app/versiculo"
-            className="mt-5 inline-flex items-center justify-center rounded-pill bg-orange px-7 py-3 font-display text-base font-bold text-white shadow-[0_5px_0_0_var(--color-orange-dark)] active:translate-y-[3px] active:shadow-[0_2px_0_0_var(--color-orange-dark)]"
+            className="mt-5 inline-flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] bg-action-primary-bg px-7 py-3 font-display text-base font-bold text-action-primary-fg shadow-[0_4px_0_0_var(--color-orange-dark)] transition-[transform,box-shadow] duration-150 active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-orange-dark)]"
           >
             Ver desafio
           </Link>

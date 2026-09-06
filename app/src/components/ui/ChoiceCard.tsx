@@ -27,10 +27,11 @@ export function ChoiceCard({ children, selected, correct, revealed, onClick, dis
 
   return (
     <motion.button
+      type="button"
       whileTap={disabled ? undefined : { scale: 0.98 }}
       onClick={onClick}
       disabled={disabled}
-      className={`relative w-full rounded-2xl border-2 font-semibold text-navy-deep transition-colors ${
+      className={`relative min-h-11 w-full rounded-2xl border-2 font-semibold text-navy-deep transition-colors ${
         icon ? 'p-3 text-center' : 'p-4 text-left'
       } ${stateClasses}`}
     >
