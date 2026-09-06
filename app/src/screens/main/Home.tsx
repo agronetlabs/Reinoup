@@ -8,6 +8,7 @@ import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useAuthStore } from '../../store/authStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useMascotChatStore } from '../../store/mascotChatStore';
 import { proximaHistoria } from '../../content/stories';
 import { getVerseOfDay } from '../../content/verses';
 import { getAvatarItem } from '../../content/avatar-items';
@@ -32,6 +33,7 @@ export function Home() {
 
   const level = getLevelProgress(xp);
   const verse = getVerseOfDay();
+  const openChat = useMascotChatStore((s) => s.openChat);
 
   const currentStory = proximaHistoria(new Set(Object.keys(stories).filter((id) => stories[id]?.completed)));
   const chaptersDone = stories[currentStory.id]?.chaptersCompleted ?? 0;
@@ -80,8 +82,16 @@ export function Home() {
         <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-yellow/25" />
         <div className="relative flex items-end gap-2">
           <MascotOficial pose="acenando" size={112} className="shrink-0" />
-          <div className="mb-5 rounded-3xl rounded-bl-md bg-white px-4 py-3 text-sm font-extrabold leading-snug text-navy-deep shadow-[var(--shadow-card)]">
-            Vamos aprender a Palavra de Deus hoje!
+          <div className="mb-3 flex flex-col items-start gap-2">
+            <div className="rounded-3xl rounded-bl-md bg-white px-4 py-3 text-sm font-extrabold leading-snug text-navy-deep shadow-[var(--shadow-card)]">
+              Vamos aprender a Palavra de Deus hoje!
+            </div>
+            <button
+              onClick={openChat}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-action-primary-bg px-4 py-2 font-display text-xs font-bold text-action-primary-fg shadow-[0_3px_0_0_var(--color-orange-dark)] transition-[transform,box-shadow] duration-150 active:translate-y-[2px] active:shadow-none"
+            >
+              🎙️ Falar com o Cordeirinho
+            </button>
           </div>
         </div>
       </section>
