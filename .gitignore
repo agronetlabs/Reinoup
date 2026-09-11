@@ -9,6 +9,7 @@ lerna-debug.log*
 # database
 *.sqlite
 /.local/
+/.impeccable/hook.cache.json
 
 # package-json
 package-json.lock

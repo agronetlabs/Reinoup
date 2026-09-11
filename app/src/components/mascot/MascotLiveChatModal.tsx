@@ -5,6 +5,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { MascotOficial } from './MascotOficial';
 import { BrandIcon } from '../illustrations/BrandIcon';
+import { APPROVED_VOICE_IDS } from '../../../shared/voice-policy';
 
 const DEFAULT_AGENT_ID = 'agent_9001k156nw8yfhq827h291a9d2qp';
 
@@ -187,7 +188,15 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
 export function MascotLiveChatModal({ open, onClose, agentId }: MascotLiveChatModalProps) {
   return (
     <Modal open={open} onClose={onClose}>
-      {open && <ConversationProvider>
+      {open && APPROVED_VOICE_IDS.length === 0 && (
+        <div className="flex flex-col items-center gap-4 text-center">
+          <MascotOficial size={100} />
+          <h2 className="font-display text-xl font-bold text-navy">A voz do Cordeirinho está em preparação</h2>
+          <p role="status" className="text-navy">Estamos escolhendo uma voz brasileira para o ReinoUp. Enquanto isso, você pode continuar lendo e brincando.</p>
+          <Button full onClick={onClose}>Continuar aprendendo</Button>
+        </div>
+      )}
+      {open && APPROVED_VOICE_IDS.length > 0 && <ConversationProvider>
         <LiveChatSession onClose={onClose} agentId={agentId} />
       </ConversationProvider>}
     </Modal>

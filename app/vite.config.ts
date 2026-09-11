@@ -39,7 +39,17 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: [`${base}retire-narration-cache.js`],
         globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2}'],
+        runtimeCaching: [{
+          urlPattern: /\/audio\/stories\/.*\.(?:mp3|json)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'story-narration-v2',
+            expiration: { maxEntries: 24, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        }],
       },
     }),
   ],

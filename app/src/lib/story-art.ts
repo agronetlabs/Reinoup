@@ -3,6 +3,13 @@ export interface StoryArtAsset {
   focalPoint?: string;
   guide?: 'left' | 'right';
   src: string;
+  fallbackSrc?: string;
+}
+
+export function resolveStoryArtSource(art: StoryArtAsset, failedSources: readonly string[]): string | undefined {
+  if (!failedSources.includes(art.src)) return art.src;
+  if (art.fallbackSrc && !failedSources.includes(art.fallbackSrc)) return art.fallbackSrc;
+  return undefined;
 }
 
 const rawBase = import.meta.env?.BASE_URL || '/';
@@ -58,30 +65,35 @@ const STORY_ART: Record<string, StoryArtAsset> = {
     alt: 'Adão e Eva no jardim diante da escolha, com a árvore e a serpente ao fundo',
     focalPoint: '50% 50%',
     guide: 'right',
-    src: `${genesis}/gn-02/cover.svg`,
+    src: `${genesis}/gn-02/cover.webp`,
+    fallbackSrc: `${genesis}/gn-02/cover.svg`,
   },
   'gn-02-c1': {
     alt: 'Adão e Eva cuidando do jardim do Éden, cheio de árvores, água e vida',
     focalPoint: '50% 54%',
     guide: 'left',
-    src: `${genesis}/gn-02/01-jardim-cuidado.svg`,
+    src: `${genesis}/gn-02/01-jardim-cuidado.webp`,
+    fallbackSrc: `${genesis}/gn-02/01-jardim-cuidado.svg`,
   },
   'gn-02-c2': {
     alt: 'A serpente conversa com Eva junto à árvore do fruto',
     focalPoint: '52% 50%',
     guide: 'right',
-    src: `${genesis}/gn-02/02-voz-serpente.svg`,
+    src: `${genesis}/gn-02/02-voz-serpente.webp`,
+    fallbackSrc: `${genesis}/gn-02/02-voz-serpente.svg`,
   },
   'gn-02-c3': {
     alt: 'Adão e Eva se escondem entre as árvores depois de fazer uma escolha errada',
     focalPoint: '50% 52%',
     guide: 'left',
-    src: `${genesis}/gn-02/03-esconderijo.svg`,
+    src: `${genesis}/gn-02/03-esconderijo.webp`,
+    fallbackSrc: `${genesis}/gn-02/03-esconderijo.svg`,
   },
   'gn-02-c4': {
     alt: 'Adão e Eva seguem por um novo caminho, ainda cuidados por Deus',
     focalPoint: '50% 55%',
-    src: `${genesis}/gn-02/04-novo-caminho.svg`,
+    src: `${genesis}/gn-02/04-novo-caminho.webp`,
+    fallbackSrc: `${genesis}/gn-02/04-novo-caminho.svg`,
   },
 
   // ============================================================

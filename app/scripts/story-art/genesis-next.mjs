@@ -13,35 +13,190 @@ const person = (x, y, scale = 1, robe = '#C87843', pose = 'open') => `
       : '<path d="M-34 55Q-18 72-5 92M34 55Q18 72 5 92" fill="none" stroke="#B86E40" stroke-width="17" stroke-linecap="round"/>'}
   </g>`;
 
-const adaoEva = (x, y, scale = 1, hidden = false) => `
-  <g transform="translate(${x} ${y}) scale(${scale})" filter="url(#softShadow)">
-    <circle cx="-58" cy="-54" r="30" fill="#A96135"/>
-    <circle cx="58" cy="-54" r="30" fill="#B86E40"/>
-    <path d="M-34-60q34-46 68 0v27q-34 28-68 0z" fill="#59321F"/>
-    <path d="M24-59q34-42 68 0v30q-34 28-68 0z" fill="#7B4A2B"/>
-    <circle cx="-68" cy="-54" r="4" fill="#14213D"/><circle cx="-48" cy="-54" r="4" fill="#14213D"/>
-    <circle cx="48" cy="-54" r="4" fill="#14213D"/><circle cx="68" cy="-54" r="4" fill="#14213D"/>
-    <path d="M-92 167Q-75 18-58 10Q-35 28-6 167z" fill="#4F9E4E"/>
-    <path d="M6 167Q35 28 58 10q17 8 34 157z" fill="#5CAD55"/>
-    <path d="M-75 158v74M-42 158v74M42 158v74M75 158v74" stroke="#A96135" stroke-width="15" stroke-linecap="round"/>
-    ${hidden ? '<path d="M-105 52Q-42 5 0 62T105 52" fill="none" stroke="#397F45" stroke-width="28" stroke-linecap="round" opacity=".9"/>' : ''}
+const edenDefs = `
+  <defs>
+    <linearGradient id="edenDawn" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1D4689"/><stop offset=".34" stop-color="#63AFE2"/><stop offset=".72" stop-color="#FFC93C"/><stop offset="1" stop-color="#FFFBF0"/>
+    </linearGradient>
+    <linearGradient id="edenEvening" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#14213D"/><stop offset=".38" stop-color="#1D4689"/><stop offset=".76" stop-color="#FF7A29"/><stop offset="1" stop-color="#FFC93C"/>
+    </linearGradient>
+    <linearGradient id="edenLeaf" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8BC66A"/><stop offset=".48" stop-color="#4E9A4D"/><stop offset="1" stop-color="#2F7B45"/>
+    </linearGradient>
+    <linearGradient id="edenBark" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#B86E40"/><stop offset=".52" stop-color="#7B4A2B"/><stop offset="1" stop-color="#59321F"/>
+    </linearGradient>
+    <linearGradient id="edenRiver" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#BDEBFA"/><stop offset=".48" stop-color="#68BDE7"/><stop offset="1" stop-color="#1D4689"/>
+    </linearGradient>
+    <linearGradient id="wovenAmber" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFC93C"/><stop offset=".52" stop-color="#FF7A29"/><stop offset="1" stop-color="#B86E40"/>
+    </linearGradient>
+    <linearGradient id="wovenBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#68BDE7"/><stop offset=".5" stop-color="#1D4689"/><stop offset="1" stop-color="#14213D"/>
+    </linearGradient>
+    <radialGradient id="skinAdam" cx=".34" cy=".24" r=".85">
+      <stop stop-color="#D58A56"/><stop offset=".58" stop-color="#A96135"/><stop offset="1" stop-color="#7B4A2B"/>
+    </radialGradient>
+    <radialGradient id="skinEva" cx=".34" cy=".24" r=".85">
+      <stop stop-color="#E49A66"/><stop offset=".58" stop-color="#B86E40"/><stop offset="1" stop-color="#8B572A"/>
+    </radialGradient>
+    <linearGradient id="hairAdam" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#7B4A2B"/><stop offset="1" stop-color="#3C251B"/>
+    </linearGradient>
+    <linearGradient id="hairEva" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#9A5732"/><stop offset="1" stop-color="#59321F"/>
+    </linearGradient>
+    <linearGradient id="meadowPaint" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8BC66A"/><stop offset=".47" stop-color="#5CAD55"/><stop offset="1" stop-color="#397F45"/>
+    </linearGradient>
+    <pattern id="leafSpeckle" width="28" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="5" r="2.5" fill="#FFFBF0" opacity=".18"/>
+      <path d="M15 17q5-7 10-1" fill="none" stroke="#14213D" stroke-width="2" opacity=".11"/>
+    </pattern>
+    <pattern id="earthSpeckle" width="34" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="8" cy="8" r="2" fill="#59321F" opacity=".18"/><circle cx="26" cy="20" r="1.5" fill="#FFFBF0" opacity=".2"/>
+      <path d="M12 23l8-5" stroke="#7B4A2B" stroke-width="2" opacity=".16"/>
+    </pattern>
+    <pattern id="clothWeave" width="18" height="18" patternUnits="userSpaceOnUse">
+      <path d="M0 4h18M4 0v18" stroke="#FFFBF0" stroke-width="1.5" opacity=".16"/>
+    </pattern>
+    <filter id="edenDepth" x="-25%" y="-25%" width="150%" height="170%">
+      <feDropShadow dx="0" dy="14" stdDeviation="11" flood-color="#14213D" flood-opacity=".22"/>
+    </filter>
+    <filter id="farBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.4"/>
+    </filter>
+    <filter id="watercolorGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>`;
+
+const edenTree = (x, y, scale = 1, fruit = true, flip = false) => `
+  <g transform="translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})" filter="url(#edenDepth)">
+    <path d="M-48 300Q-34 214-25 125Q-22 57-62-8Q-15 6 5 56Q27 10 78-26Q39 30 34 92Q74 65 108 68Q61 91 38 137Q45 218 65 300z" fill="url(#edenBark)"/>
+    <path d="M-20 275q18-118 8-216M17 265q-8-95 11-175" fill="none" stroke="#FFAF5C" stroke-width="8" opacity=".23" stroke-linecap="round"/>
+    <g fill="url(#edenLeaf)">
+      <path d="M-185-18q14-65 71-71q18-68 84-48q45-53 101-10q67-10 82 52q62 17 51 79q-8 51-70 56q-35 54-95 28q-54 35-101 1q-66 15-87-38q-43-12-36-49z"/>
+      <path d="M-158 7q52-34 102-2t98 0t117 9q-24 70-99 62q-52 32-106-1q-80 13-112-68z" fill="#397F45" opacity=".48"/>
+    </g>
+    <path d="M-160-20q60-34 112-2t99-9t117 20M-123 35q49-29 99 0t103-5" fill="none" stroke="#8BC66A" stroke-width="10" opacity=".28" stroke-linecap="round"/>
+    <path d="M-185-18q14-65 71-71q18-68 84-48q45-53 101-10q67-10 82 52q62 17 51 79q-8 51-70 56q-35 54-95 28q-54 35-101 1q-66 15-87-38q-43-12-36-49z" fill="url(#leafSpeckle)" opacity=".9"/>
+    ${fruit ? `<g fill="#FF7A29" stroke="#FFC93C" stroke-width="4">
+      <circle cx="-92" cy="-22" r="15"/><circle cx="-19" cy="-82" r="16"/><circle cx="72" cy="-41" r="15"/><circle cx="37" cy="29" r="16"/><circle cx="126" cy="5" r="13"/>
+    </g>` : ''}
   </g>`;
 
-const tree = (x, y, scale = 1, fruit = false) => `
-  <g transform="translate(${x} ${y}) scale(${scale})" filter="url(#softShadow)">
-    <path d="M0 220V40" stroke="#7B4A2B" stroke-width="30" stroke-linecap="round"/>
-    <circle cx="0" cy="12" r="96" fill="#397F45"/>
-    <circle cx="-68" cy="66" r="68" fill="#4E9A4D"/><circle cx="74" cy="62" r="72" fill="#5CAD55"/>
-    ${fruit ? '<g fill="#FF7A29"><circle cx="-42" cy="8" r="12"/><circle cx="42" cy="38" r="12"/><circle cx="-5" cy="83" r="12"/></g>' : ''}
+const face = (skin, hair, mood = 'smile', flip = false) => `
+  <g transform="scale(${flip ? -1 : 1} 1)">
+    <ellipse cx="-42" cy="-102" rx="9" ry="14" fill="${skin}"/><ellipse cx="42" cy="-102" rx="9" ry="14" fill="${skin}"/>
+    <ellipse cx="0" cy="-105" rx="42" ry="48" fill="${skin}"/>
+    <ellipse cx="-13" cy="-119" rx="21" ry="18" fill="#FFFBF0" opacity=".08" transform="rotate(-22 -13 -119)"/>
+    <path d="M-43-111q4-51 47-55q45 4 44 59q-13-29-35-36q-27 24-56 25z" fill="${hair}"/>
+    <path d="M-36-127q9-17 20-23M-16-145q13-17 27-17M10-145q16-11 28-4M30-132q13-8 18 0" fill="none" stroke="${hair}" stroke-width="14" stroke-linecap="round"/>
+    <path d="M-26-114q10-8 20-1M7-115q10-7 20 1" fill="none" stroke="#59321F" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="-15" cy="-103" rx="6" ry="8" fill="#14213D"/><ellipse cx="16" cy="-103" rx="6" ry="8" fill="#14213D"/>
+    <circle cx="-13" cy="-106" r="2" fill="#FFFBF0"/><circle cx="18" cy="-106" r="2" fill="#FFFBF0"/>
+    <path d="M0-103l-5 14q5 4 11 0" fill="none" stroke="#7B4A2B" stroke-width="3" stroke-linecap="round"/>
+    ${mood === 'worried'
+      ? '<path d="M-18-122l13-5M7-127l14 5M-12-76q12-10 24 0" fill="none" stroke="#59321F" stroke-width="4" stroke-linecap="round"/>'
+      : mood === 'wonder'
+        ? '<path d="M-18-123q8-5 14 0M6-123q8-5 14 0" fill="none" stroke="#59321F" stroke-width="4" stroke-linecap="round"/><ellipse cx="0" cy="-77" rx="8" ry="10" fill="#7B4A2B"/>'
+        : '<path d="M-18-122q8-4 14 0M6-122q8-4 14 0M-14-78q14 16 28 0" fill="none" stroke="#59321F" stroke-width="4" stroke-linecap="round"/>'}
+    <ellipse cx="-29" cy="-87" rx="9" ry="5" fill="#FF7A29" opacity=".22"/><ellipse cx="29" cy="-87" rx="9" ry="5" fill="#FF7A29" opacity=".22"/>
   </g>`;
 
-const serpent = (x, y, scale = 1) => `
-  <g transform="translate(${x} ${y}) scale(${scale})" filter="url(#softShadow)">
-    <path d="M-190 120q80-130 160 0t160 0q62-92 132-15" fill="none" stroke="#397F45" stroke-width="34" stroke-linecap="round"/>
-    <circle cx="260" cy="105" r="35" fill="#4E9A4D"/>
-    <circle cx="270" cy="96" r="5" fill="#FFC93C"/><circle cx="288" cy="96" r="5" fill="#FFC93C"/>
-    <path d="M294 116q34 12 47 0" fill="none" stroke="#FF7A29" stroke-width="5" stroke-linecap="round"/>
+const edenPerson = (kind, x, y, scale = 1, pose = 'stand', mood = 'smile', flip = false, outer = false) => {
+  const isAdam = kind === 'adam';
+  const skin = isAdam ? 'url(#skinAdam)' : 'url(#skinEva)';
+  const hair = isAdam ? 'url(#hairAdam)' : 'url(#hairEva)';
+  const cloth = outer ? (isAdam ? 'url(#wovenBlue)' : 'url(#wovenAmber)') : (isAdam ? '#3D7D44' : '#5CAD55');
+  const arms = {
+    tend: '<path d="M-34-18Q-86 13-112 72M34-18Q75 12 102 52" fill="none"',
+    offer: '<path d="M-34-18Q-72 8-87 47M34-18Q85-40 125-72" fill="none"',
+    hide: '<path d="M-34-18Q-7 24 18 42M34-18Q8 10-17 39" fill="none"',
+    walk: '<path d="M-34-18Q-72 19-91 55M34-18Q73 9 94 44" fill="none"',
+    stand: '<path d="M-34-18Q-61 26-66 68M34-18Q61 26 66 68" fill="none"',
+  }[pose];
+  const hands = {
+    tend: [[-112, 72], [102, 52]],
+    offer: [[-87, 47], [125, -72]],
+    hide: [[18, 42], [-17, 39]],
+    walk: [[-91, 55], [94, 44]],
+    stand: [[-66, 68], [66, 68]],
+  }[pose];
+  const legs = pose === 'walk'
+    ? `<path d="M-20 112Q-32 168-62 218M20 112Q44 163 70 205" fill="none" stroke="${skin}" stroke-width="25" stroke-linecap="round"/>
+       <ellipse cx="-72" cy="222" rx="27" ry="12" fill="#59321F" transform="rotate(-13 -72 222)"/><ellipse cx="80" cy="209" rx="27" ry="12" fill="#59321F" transform="rotate(12 80 209)"/>`
+    : `<path d="M-20 112v98M20 112v98" fill="none" stroke="${skin}" stroke-width="25" stroke-linecap="round"/>
+       <ellipse cx="-27" cy="216" rx="26" ry="11" fill="#59321F"/><ellipse cx="27" cy="216" rx="26" ry="11" fill="#59321F"/>`;
+  return `
+    <g transform="translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})" filter="url(#edenDepth)">
+      ${legs}
+      ${arms} stroke="${skin}" stroke-width="22" stroke-linecap="round"/>
+      <circle cx="${hands[0][0]}" cy="${hands[0][1]}" r="12" fill="${skin}"/><circle cx="${hands[1][0]}" cy="${hands[1][1]}" r="12" fill="${skin}"/>
+      <path d="M-47-54Q0-79 47-54L62 111Q42 137 0 130Q-42 139-62 111z" fill="${cloth}"/>
+      <path d="M-47-54Q0-79 47-54L62 111Q42 137 0 130Q-42 139-62 111z" fill="url(#clothWeave)"/>
+      <path d="M-39-45Q0-18 42-45M-49 12q48 27 99 0" fill="none" stroke="${outer ? '#FFC93C' : '#2F7B45'}" stroke-width="11" opacity=".72"/>
+      <path d="M-45-48q12 79 5 144" fill="none" stroke="#FFFBF0" stroke-width="7" opacity=".12" stroke-linecap="round"/>
+      ${!outer ? '<path d="M-54 66q29-23 54 1q26-25 54-1q-28 15-54 47q-26-32-54-47z" fill="#397F45" opacity=".94"/><path d="M0 67v42" stroke="#8BC66A" stroke-width="4" opacity=".6"/>' : ''}
+      ${face(skin, hair, mood, false)}
+      ${isAdam ? '<path d="M-38-76q38 28 76 0q-2 39-38 42q-36-3-38-42z" fill="url(#hairAdam)" opacity=".88"/><path d="M-23-57q23 10 46 0" stroke="#B86E40" stroke-width="4" opacity=".5"/>' : '<path d="M-39-135q-36 34-29 101M38-135q40 40 29 105" fill="none" stroke="url(#hairEva)" stroke-width="19" stroke-linecap="round"/><path d="M-53-68q9 22 0 45M53-68q-9 22 0 45" fill="none" stroke="#FFAF5C" stroke-width="4" opacity=".2"/>'}
+      ${pose === 'tend' ? '<path d="M-120 67q20-24 42 0q-18 21-42 0z" fill="#FFC93C" stroke="#2F7B45" stroke-width="5"/>' : ''}
+      ${pose === 'offer' ? '<circle cx="127" cy="-77" r="16" fill="#FF7A29" stroke="#FFC93C" stroke-width="4"/>' : ''}
+    </g>`;
+};
+
+const gentleSerpent = (x, y, scale = 1, flip = false) => `
+  <g transform="translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})" filter="url(#edenDepth)">
+    <path d="M-145 70q58-76 112-5t101 4q52-76 93-23q28 36-9 72" fill="none" stroke="#2F7B45" stroke-width="31" stroke-linecap="round"/>
+    <path d="M-139 66q55-53 103 4t92 2" fill="none" stroke="#8BC66A" stroke-width="9" stroke-linecap="round" opacity=".75"/>
+    <ellipse cx="148" cy="112" rx="38" ry="31" fill="#4E9A4D"/>
+    <ellipse cx="161" cy="103" rx="6" ry="8" fill="#FFC93C"/><circle cx="162" cy="104" r="3" fill="#14213D"/>
+    <path d="M168 123q13 9 26-1" fill="none" stroke="#14213D" stroke-width="4" stroke-linecap="round"/>
+    <path d="M191 121l18-7" stroke="#FF7A29" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="127" cy="96" r="5" fill="#FFC93C" opacity=".72"/>
   </g>`;
+
+const botanicalForeground = (side = 'left', y = 610) => {
+  const flip = side === 'right' ? -1 : 1;
+  const x = side === 'right' ? 1200 : 0;
+  return `<g transform="translate(${x} ${y}) scale(${flip} 1)" filter="url(#edenDepth)">
+    <path d="M0 180Q95 66 180-30M0 215Q136 145 254 116M18 210Q55 90 24 5" fill="none" stroke="#2F7B45" stroke-width="22" stroke-linecap="round"/>
+    <g fill="url(#edenLeaf)" stroke="#397F45" stroke-width="4">
+      <ellipse cx="72" cy="88" rx="62" ry="27" transform="rotate(-42 72 88)"/><ellipse cx="137" cy="22" rx="69" ry="30" transform="rotate(-31 137 22)"/>
+      <ellipse cx="172" cy="139" rx="70" ry="30" transform="rotate(-8 172 139)"/><ellipse cx="71" cy="165" rx="60" ry="27" transform="rotate(22 71 165)"/>
+      <ellipse cx="33" cy="37" rx="51" ry="24" transform="rotate(72 33 37)"/>
+    </g>
+    <g fill="#FFC93C"><circle cx="114" cy="106" r="9"/><circle cx="203" cy="118" r="8"/><circle cx="48" cy="137" r="7"/></g>
+  </g>`;
+};
+
+const smallBirds = (x, y, scale = 1) => `
+  <g transform="translate(${x} ${y}) scale(${scale})" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round" opacity=".7">
+    <path d="M0 16q18-25 36 0q18-25 36 0M102 0q14-20 28 0q14-20 28 0"/>
+  </g>`;
+
+const meadowDetails = (x, y, scale = 1, flip = false) => `
+  <g transform="translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})">
+    <g fill="none" stroke="#397F45" stroke-width="5" stroke-linecap="round">
+      <path d="M0 48q2-31-13-52M3 47q12-29 28-42M64 48q-2-29-18-43M66 48q12-24 28-35M128 48q1-26-12-43M130 48q10-28 27-37"/>
+    </g>
+    <g stroke="#FFFBF0" stroke-width="3">
+      <circle cx="-13" cy="-6" r="8" fill="#FF7A29"/><circle cx="31" cy="4" r="7" fill="#FFC93C"/>
+      <circle cx="46" cy="3" r="7" fill="#FFAF5C"/><circle cx="94" cy="12" r="8" fill="#FF7A29"/>
+      <circle cx="116" cy="3" r="7" fill="#FFC93C"/><circle cx="157" cy="9" r="7" fill="#FFAF5C"/>
+    </g>
+  </g>`;
+
+const butterfly = (x, y, scale = 1, flip = false) => `
+  <g transform="translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})" filter="url(#edenDepth)">
+    <path d="M0 0q-28-31-47-4q13 28 47 16q34 12 47-16Q28-31 0 0z" fill="#FFC93C" stroke="#FF7A29" stroke-width="4"/>
+    <path d="M0-4v27M0-2l-9-12M0-2l9-12" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"/>
+  </g>`;
+
+const edenSvg = (body, label) => svg(body, label).replace(/[ \t]+$/gm, '');
 
 const grain = (x, y, scale = 1) => `
   <g transform="translate(${x} ${y}) scale(${scale})" fill="none" stroke="#EBA317" stroke-linecap="round">
@@ -97,39 +252,148 @@ const bricks = (x, y, scale = 1) => `
 
 const scenes = {
   'gn-02': {
-    'cover.svg': svg(`
-      <rect width="1200" height="800" fill="url(#daySky)"/><circle cx="890" cy="150" r="180" fill="url(#divineLight)"/>
-      ${clouds()}<path d="M0 500Q260 400 520 500T1200 460V800H0z" fill="#7DBB5E"/>
-      <path d="M0 610Q260 500 520 620T1200 570V800H0z" fill="url(#garden)"/>
-      ${tree(600, 265, 1.4, true)}${tree(180, 470, .75)}${tree(1010, 470, .8)}
-      ${adaoEva(485, 500, .85)}${serpent(740, 610, .62)}
-    `, 'Adão e Eva no jardim diante da escolha'),
-    '01-jardim-cuidado.svg': svg(`
-      <rect width="1200" height="800" fill="url(#daySky)"/><circle cx="170" cy="140" r="140" fill="url(#sunGlow)"/>
-      ${clouds()}<path d="M0 475Q220 370 420 490T800 470T1200 435V800H0z" fill="#8BC66A"/>
-      <path d="M0 590Q230 500 450 605T820 575T1200 550V800H0z" fill="url(#garden)"/>
-      ${tree(320, 285, 1.05, true)}${tree(930, 315, .9)}${adaoEva(610, 500, .8)}
-      <path d="M0 685Q300 640 600 685T1200 670" fill="none" stroke="#68BDE7" stroke-width="36" opacity=".9"/>
-    `, 'Adão e Eva cuidando do jardim do Éden'),
-    '02-voz-serpente.svg': svg(`
-      <rect width="1200" height="800" fill="url(#sunsetSky)"/><circle cx="905" cy="180" r="150" fill="url(#divineLight)" opacity=".55"/>
-      <path d="M0 500Q250 405 510 510T1200 470V800H0z" fill="url(#garden)"/>
-      ${tree(620, 270, 1.35, true)}${adaoEva(380, 505, .72)}${serpent(720, 585, .78)}
-      <circle cx="655" cy="385" r="18" fill="#FF7A29" filter="url(#glow)"/>
-    `, 'A serpente conversa com Eva junto à árvore'),
-    '03-esconderijo.svg': svg(`
-      <rect width="1200" height="800" fill="url(#sunsetSky)"/><ellipse cx="600" cy="210" rx="300" ry="270" fill="url(#divineLight)" opacity=".85"/>
-      <path d="M0 520Q230 405 470 520T840 490T1200 460V800H0z" fill="url(#garden)"/>
-      ${tree(260, 285, 1.12)}${tree(970, 280, 1.1)}${adaoEva(600, 520, .9, true)}
-      <path d="M520 90q80 80 160 0" fill="none" stroke="#FFF8C5" stroke-width="11" stroke-linecap="round" opacity=".9"/>
-    `, 'Adão e Eva se escondem entre as árvores'),
-    '04-novo-caminho.svg': svg(`
-      <rect width="1200" height="800" fill="url(#daySky)"/><circle cx="860" cy="150" r="170" fill="url(#divineLight)"/>
-      <path d="M0 490Q250 380 510 500T1200 450V800H0z" fill="#86C165"/>
-      <path d="M0 600Q260 520 500 625T1200 560V800H0z" fill="url(#garden)"/>
-      <path d="M580 800q-28-170 20-282 35-84 92-145" fill="none" stroke="#E2C98A" stroke-width="92" stroke-linecap="round"/>
-      ${adaoEva(370, 505, .78)}${tree(930, 280, 1.1)}${footprints(575, 665, .7)}
-    `, 'Adão e Eva seguem por um novo caminho com cuidado'),
+    'cover.svg': edenSvg(`
+      ${edenDefs}
+      <rect width="1200" height="800" fill="url(#daySky)"/>
+      <ellipse cx="778" cy="190" rx="305" ry="260" fill="url(#divineLight)" opacity=".82"/>
+      ${clouds()}${smallBirds(170, 168, .82)}
+      <g filter="url(#farBlur)" opacity=".74">
+        <path d="M0 456Q164 330 333 452T675 430T1010 403T1200 420V800H0z" fill="#8BC66A"/>
+        <g fill="#397F45"><circle cx="108" cy="410" r="93"/><circle cx="284" cy="407" r="72"/><circle cx="1010" cy="382" r="102"/><circle cx="1140" cy="418" r="92"/></g>
+      </g>
+      <path d="M0 542Q202 432 425 540T806 514T1200 486V800H0z" fill="url(#edenLeaf)"/>
+      <path d="M0 660Q244 565 505 674T1200 610V800H0z" fill="#2F7B45"/>
+      <path d="M0 660Q244 565 505 674T1200 610V800H0z" fill="url(#leafSpeckle)" opacity=".72"/>
+      <path d="M498 800q-18-136 78-244q80-91 182-148q-42 140-125 240q-82 99-89 152z" fill="url(#edenRiver)" opacity=".86"/>
+      <path d="M550 742q68-70 128-103" fill="none" stroke="#FFFBF0" stroke-width="12" stroke-linecap="round" opacity=".55"/>
+      ${edenTree(786, 376, 1.16, true, false)}
+      ${edenPerson('adam', 350, 530, .84, 'stand', 'smile', false)}
+      ${edenPerson('eva', 551, 526, .87, 'stand', 'wonder', false)}
+      ${gentleSerpent(785, 514, .58, true)}
+      ${meadowDetails(248, 694, .72)}${meadowDetails(930, 699, .62, true)}${butterfly(239, 439, .62)}
+      ${botanicalForeground('left', 610)}${botanicalForeground('right', 626)}
+    `, 'Adão e Eva observam a árvore no jardim luminoso enquanto a serpente se aproxima com calma'),
+    '01-jardim-cuidado.svg': edenSvg(`
+      ${edenDefs}
+      <rect width="1200" height="800" fill="url(#edenDawn)"/>
+      <circle cx="190" cy="150" r="70" fill="#FFC93C"/><circle cx="190" cy="150" r="175" fill="url(#sunGlow)" opacity=".78"/>
+      ${smallBirds(756, 146, .85)}
+      <g filter="url(#farBlur)" opacity=".8">
+        <path d="M0 464Q220 328 449 452T835 416T1200 390V800H0z" fill="#8BC66A"/>
+        <path d="M0 529Q215 430 440 528T800 494T1200 470V800H0z" fill="#5CAD55"/>
+        <g fill="#397F45"><circle cx="80" cy="416" r="86"/><circle cx="1062" cy="414" r="104"/><circle cx="1164" cy="438" r="83"/></g>
+      </g>
+      <path d="M0 583Q195 490 388 586T725 555T1200 524V800H0z" fill="url(#edenLeaf)"/>
+      <path d="M0 583Q195 490 388 586T725 555T1200 524V800H0z" fill="url(#leafSpeckle)" opacity=".55"/>
+      <path d="M770 800q-42-108 24-197q57-78 218-152q-69 99-123 194q-47 81-55 155z" fill="url(#edenRiver)"/>
+      <path d="M832 755q58-98 121-154" fill="none" stroke="#FFFBF0" stroke-width="10" opacity=".63" stroke-linecap="round"/>
+      ${edenTree(144, 385, .88, false, false)}${edenTree(1100, 410, .73, true, true)}
+      <g transform="translate(520 681)" filter="url(#edenDepth)">
+        <path d="M-145 62q128-92 290 0v57h-290z" fill="#7B4A2B"/><path d="M-145 62q128-92 290 0" fill="none" stroke="#F3E9D7" stroke-width="14"/>
+        <g fill="#FFC93C" stroke="#2F7B45" stroke-width="4"><circle cx="-94" cy="53" r="12"/><circle cx="-31" cy="21" r="11"/><circle cx="43" cy="26" r="12"/><circle cx="101" cy="50" r="10"/></g>
+      </g>
+      ${edenPerson('adam', 365, 505, .8, 'tend', 'smile', false)}
+      ${edenPerson('eva', 655, 500, .81, 'tend', 'smile', true)}
+      <g transform="translate(736 588)" filter="url(#edenDepth)">
+        <path d="M-38 4q38-31 76 0l-9 71q-29 18-58 0z" fill="url(#wovenBlue)"/>
+        <path d="M30 17q40-20 53 16q5 22-14 35" fill="none" stroke="#1D4689" stroke-width="12" stroke-linecap="round"/>
+        <path d="M-30 14q31 12 61 0" fill="none" stroke="#BDEBFA" stroke-width="5" opacity=".75"/>
+        <path d="M82 66q21 24 39 56M91 64q30 18 55 45M100 61q35 10 65 26" fill="none" stroke="#68BDE7" stroke-width="6" stroke-linecap="round"/>
+      </g>
+      <g transform="translate(908 648)" filter="url(#edenDepth)">
+        <ellipse cx="0" cy="24" rx="49" ry="34" fill="#FFFBF0"/><circle cx="38" cy="10" r="24" fill="#F3E9D7"/>
+        <path d="M47-5q18-27 27 5M29-5q-14-27-24 0" fill="#F3E9D7"/><circle cx="45" cy="7" r="4" fill="#14213D"/>
+        <path d="M-28 51v42M20 51v42" stroke="#B86E40" stroke-width="10" stroke-linecap="round"/>
+      </g>
+      ${meadowDetails(222, 695, .68)}${meadowDetails(1012, 706, .54, true)}${butterfly(811, 387, .52, true)}
+      ${botanicalForeground('left', 663)}
+    `, 'Adão planta e Eva cuida das flores em um Éden cheio de animais, água e vida'),
+    '02-voz-serpente.svg': edenSvg(`
+      ${edenDefs}
+      <rect width="1200" height="800" fill="url(#edenEvening)"/>
+      <ellipse cx="856" cy="232" rx="285" ry="236" fill="url(#divineLight)" opacity=".38"/>
+      ${smallBirds(192, 178, .7)}
+      <path d="M0 493Q215 400 420 496T792 468T1200 438V800H0z" fill="#5CAD55" opacity=".7"/>
+      <g filter="url(#farBlur)" opacity=".65">
+        ${edenTree(74, 438, .66, false, false)}
+        <path d="M0 594Q214 495 445 596T1200 535V800H0z" fill="#397F45"/>
+      </g>
+      <path d="M0 650Q255 550 500 657T1200 590V800H0z" fill="#2F7B45"/>
+      <path d="M0 650Q255 550 500 657T1200 590V800H0z" fill="url(#leafSpeckle)" opacity=".62"/>
+      ${edenTree(830, 386, 1.26, true, true)}
+      <path d="M595 617q105-58 197-17" fill="none" stroke="#7B4A2B" stroke-width="18" stroke-linecap="round" opacity=".65"/>
+      ${gentleSerpent(728, 450, .62, false)}
+      ${edenPerson('eva', 533, 510, .97, 'offer', 'wonder', false)}
+      ${edenPerson('adam', 208, 542, .59, 'stand', 'smile', true)}
+      <g transform="translate(493 635)" fill="#FFC93C" opacity=".78">
+        <path d="M0 0q28-28 56 0q-28 26-56 0z"/><path d="M38 28q24-22 47 2q-25 21-47-2z"/>
+      </g>
+      <path d="M411 378q66-43 124-5" fill="none" stroke="#FFFBF0" stroke-width="7" stroke-linecap="round" opacity=".52" stroke-dasharray="4 18"/>
+      ${meadowDetails(168, 696, .62)}${meadowDetails(922, 698, .58, true)}
+      ${botanicalForeground('right', 650)}
+    `, 'Eva escuta uma serpente de aparência gentil junto à árvore enquanto Adão está mais distante'),
+    '03-esconderijo.svg': edenSvg(`
+      ${edenDefs}
+      <rect width="1200" height="800" fill="url(#edenEvening)"/>
+      <ellipse cx="572" cy="176" rx="310" ry="245" fill="url(#divineLight)" opacity=".68"/>
+      <path d="M390 0q76 122 175 191T724 413" fill="none" stroke="#FFFBF0" stroke-width="34" opacity=".17" stroke-linecap="round"/>
+      <g filter="url(#farBlur)" opacity=".74">
+        <path d="M0 470Q215 352 432 478T814 446T1200 408V800H0z" fill="#4E9A4D"/>
+        <g fill="#2F7B45"><circle cx="110" cy="397" r="112"/><circle cx="1035" cy="383" r="128"/></g>
+      </g>
+      <path d="M0 596Q240 486 480 606T1200 540V800H0z" fill="#397F45"/>
+      <path d="M0 692Q255 603 510 704T1200 638V800H0z" fill="#2F7B45"/>
+      <path d="M0 692Q255 603 510 704T1200 638V800H0z" fill="url(#leafSpeckle)" opacity=".66"/>
+      ${edenTree(73, 405, 1.08, false, false)}${edenTree(1122, 412, 1.06, false, true)}
+      <g transform="translate(600 613)">
+        <ellipse cx="0" cy="128" rx="250" ry="52" fill="#14213D" opacity=".22"/>
+        ${edenPerson('adam', -91, -46, .86, 'hide', 'worried', false)}
+        ${edenPerson('eva', 99, -43, .86, 'hide', 'worried', true)}
+        <path d="M-236 36Q-145-41-53 44T118 36T244 20" fill="none" stroke="#2F7B45" stroke-width="38" stroke-linecap="round"/>
+        <g fill="url(#edenLeaf)" stroke="#397F45" stroke-width="4">
+          <ellipse cx="-174" cy="11" rx="75" ry="34" transform="rotate(-17 -174 11)"/><ellipse cx="-55" cy="34" rx="76" ry="33" transform="rotate(14 -55 34)"/>
+          <ellipse cx="82" cy="27" rx="78" ry="34" transform="rotate(-13 82 27)"/><ellipse cx="188" cy="2" rx="73" ry="33" transform="rotate(17 188 2)"/>
+        </g>
+      </g>
+      <path d="M580 304q-38 47-77 92M601 299q6 58-7 108M623 306q38 42 56 91" fill="none" stroke="#FFFBF0" stroke-width="9" stroke-linecap="round" opacity=".7"/>
+      <g fill="#F3E9D7" opacity=".62">
+        <ellipse cx="558" cy="432" rx="10" ry="20" transform="rotate(18 558 432)"/><ellipse cx="609" cy="476" rx="10" ry="20" transform="rotate(-18 609 476)"/>
+      </g>
+      ${meadowDetails(269, 711, .56)}${meadowDetails(986, 712, .52, true)}
+      ${botanicalForeground('left', 618)}${botanicalForeground('right', 620)}
+    `, 'Adão e Eva se escondem entre folhas, mas uma luz acolhedora abre caminho até eles'),
+    '04-novo-caminho.svg': edenSvg(`
+      ${edenDefs}
+      <rect width="1200" height="800" fill="url(#edenDawn)"/>
+      <ellipse cx="888" cy="166" rx="255" ry="224" fill="url(#divineLight)" opacity=".9"/>
+      <circle cx="888" cy="166" r="48" fill="#FFC93C" opacity=".82"/>
+      ${smallBirds(230, 167, .9)}
+      <g filter="url(#farBlur)" opacity=".77">
+        <path d="M0 463Q195 344 403 458T765 427T1200 390V800H0z" fill="#8BC66A"/>
+        <path d="M0 535Q205 431 420 535T815 492T1200 468V800H0z" fill="#5CAD55"/>
+      </g>
+      <path d="M0 623Q220 515 449 624T1200 558V800H0z" fill="url(#edenLeaf)"/>
+      <path d="M0 623Q220 515 449 624T1200 558V800H0z" fill="url(#leafSpeckle)" opacity=".53"/>
+      <path d="M393 800Q426 674 536 594Q646 513 821 385Q715 557 657 662Q618 732 613 800z" fill="#F3E9D7"/>
+      <path d="M393 800Q426 674 536 594Q646 513 821 385Q715 557 657 662Q618 732 613 800z" fill="url(#earthSpeckle)" opacity=".68"/>
+      <g transform="translate(894 386)" filter="url(#edenDepth)">
+        <path d="M-76 170V-8M76 170V-8" stroke="#7B4A2B" stroke-width="30" stroke-linecap="round"/>
+        <path d="M-108-6q32-92 108-94q77 1 108 94" fill="none" stroke="#59321F" stroke-width="28" stroke-linecap="round"/>
+        <path d="M-77 22h154" stroke="#FFC93C" stroke-width="12" opacity=".8"/>
+      </g>
+      ${edenPerson('adam', 379, 522, .86, 'walk', 'smile', false, true)}
+      ${edenPerson('eva', 574, 508, .87, 'walk', 'smile', false, true)}
+      <path d="M465 466q49-47 97 0" fill="none" stroke="#B86E40" stroke-width="18" stroke-linecap="round"/>
+      <g transform="translate(712 665)" filter="url(#edenDepth)">
+        <path d="M0 72V8" stroke="#2F7B45" stroke-width="9" stroke-linecap="round"/><path d="M0 38q-38-29-51-6q24 35 51 6M0 24q38-30 52-4q-25 34-52 4" fill="#5CAD55"/>
+      </g>
+      <g transform="translate(997 631)" filter="url(#edenDepth)">
+        <path d="M0 55q35-42 74-8q-18 52-74 8z" fill="#FFFBF0"/><circle cx="58" cy="38" r="5" fill="#14213D"/>
+        <path d="M72 46l24 9M17 58l-28 31" stroke="#FF7A29" stroke-width="6" stroke-linecap="round"/>
+      </g>
+      ${meadowDetails(126, 708, .68)}${meadowDetails(960, 714, .56, true)}${butterfly(748, 454, .48)}
+      ${botanicalForeground('left', 671)}
+    `, 'Vestidos com túnicas, Adão e Eva caminham juntos por uma estrada iluminada enquanto uma nova planta nasce'),
   },
   'gn-03': {
     'cover.svg': svg(`

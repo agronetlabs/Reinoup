@@ -27,7 +27,7 @@ export function VerseOfDay() {
   const dailyVerseDone = useProgressStore((s) => s.dailyChallenge.tasks.some((task) => task.id === 'decorar-versiculo' && task.done));
   const ensureFreshDaily = useProgressStore((s) => s.ensureFreshDaily);
   const collectVerse = useProgressStore((s) => s.collectVerse);
-  const { speak, stop, speaking } = useSpeech();
+  const { speak, stop, speaking, error: speechError } = useSpeech();
   const recorder = useRecorder();
 
   const verse = useMemo(() => getVerseOfDay(), []);
@@ -72,6 +72,7 @@ export function VerseOfDay() {
           >
             {speaking ? '⏸️ Parar' : '▶️ Ouvir'}
           </button>
+          {speechError && <p role="alert" className="mt-3 text-sm text-navy">{speechError}</p>}
         </Card>
 
         {!dailyVerseDone ? (

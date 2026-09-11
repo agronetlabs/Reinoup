@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { SceneConfig, Motif } from '../../content/types';
-import { getStoryArt } from '../../lib/story-art';
+import { getStoryArt, resolveStoryArtSource } from '../../lib/story-art';
 import { MascotOficial } from '../mascot/MascotOficial';
 import { MotifIcon } from './MotifIcon';
 
@@ -33,25 +34,51 @@ interface SceneProps {
 }
 
 export function Scene({ scene, className = '', height = 200, width, artId, showGuide = false }: SceneProps) {
-  const [failedArtId, setFailedArtId] = useState<string | null>(null);
+  const [failedSources, setFailedSources] = useState<string[]>([]);
+  const reduceMotion = useReducedMotion();
   const art = getStoryArt(artId);
-  const useArt = art && failedArtId !== artId;
+  const source = art && resolveStoryArtSource(art, failedSources);
 
-  if (useArt) {
+  if (art && source) {
     const guideSize = Math.min(126, Math.max(64, Math.round(height * 0.5)));
+    const entranceX = art.guide === 'left' ? 10 : art.guide === 'right' ? -10 : 0;
     return (
-      <div className={`relative overflow-hidden rounded-2xl bg-cream-dark ${className}`} style={{ height, width: width ?? '100%' }}>
-        <img
-          src={art.src}
+      <div
+        className={`relative isolate overflow-hidden rounded-[var(--radius-card)] border border-white/70 bg-cream-dark shadow-[0_10px_24px_rgba(20,33,61,0.14)] ${className}`}
+        style={{ height, width: width ?? '100%' }}
+      >
+        <motion.img
+          key={source}
+          src={source}
           alt={art.alt}
-          onError={() => setFailedArtId(artId ?? null)}
+          onError={() => setFailedSources(previous => previous.includes(source) ? previous : [...previous, source])}
           className="h-full w-full object-cover"
-          style={{ objectPosition: art.focalPoint }}
+          style={{ objectPosition: art.focalPoint, transformOrigin: art.focalPoint }}
+          initial={reduceMotion ? false : { scale: 1.045, x: entranceX, filter: 'saturate(.82) brightness(.94)' }}
+          animate={{ scale: 1, x: 0, filter: 'saturate(1) brightness(1)' }}
+          transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
         />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy-deep/20 via-transparent to-white/10" />
+        {!reduceMotion && (
+          <motion.div
+            key={`light-${artId}`}
+            aria-hidden
+            className="pointer-events-none absolute -inset-y-8 w-1/3 rotate-12 bg-white/20 blur-2xl"
+            initial={{ x: '-180%', opacity: 0 }}
+            animate={{ x: '430%', opacity: [0, 0.45, 0] }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          />
+        )}
         {showGuide && art.guide && (
-          <div className={`pointer-events-none absolute bottom-0 ${art.guide === 'left' ? 'left-2' : 'right-2'} drop-shadow-lg`}>
+          <motion.div
+            key={`guide-${artId}`}
+            initial={reduceMotion ? false : { opacity: 0.7, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className={`pointer-events-none absolute bottom-0 ${art.guide === 'left' ? 'left-2' : 'right-2'} drop-shadow-lg`}
+          >
             <MascotOficial size={guideSize} />
-          </div>
+          </motion.div>
         )}
       </div>
     );

@@ -8,20 +8,48 @@ import { ChoiceCard } from '../../components/ui/ChoiceCard';
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
 import { Scene } from '../../components/illustrations/Scene';
 import { getStory, pagesForAge } from '../../content/stories';
+import type { AgeBand } from '../../content/types';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useStoryAudio } from '../../hooks/useStoryAudio';
 import { useAppLock } from '../../hooks/useAppLock';
-import { getStoryAudioPath } from '../../lib/story-audio';
+import {
+  getStoryAudioPageUrl,
+  loadStoryAudioPage,
+  type StoryAudioCue,
+  type StoryAudioPage,
+} from '../../lib/story-audio';
+
+function NarratedText({ text, cue }: { text: string; cue: StoryAudioCue | null }) {
+  if (!cue || cue.characterStart < 0 || cue.characterEnd > text.length) return <>{text}</>;
+  return <>
+    {text.slice(0, cue.characterStart)}
+    <mark className="rounded bg-yellow/45 px-0.5 text-inherit">{text.slice(cue.characterStart, cue.characterEnd)}</mark>
+    {text.slice(cue.characterEnd)}
+  </>;
+}
 
 export function ChapterReader() {
   const { storyId, chapterIndex: chapterIndexParam } = useParams<{ storyId: string; chapterIndex: string }>();
+  const ageBand = useSettingsStore((s) => s.ageBand);
+  return <ChapterReaderSession
+    key={`${storyId}:${chapterIndexParam}:${ageBand}`}
+    storyId={storyId}
+    chapterIndexParam={chapterIndexParam}
+    ageBand={ageBand}
+  />;
+}
+
+function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
+  storyId: string | undefined;
+  chapterIndexParam: string | undefined;
+  ageBand: AgeBand;
+}) {
   const navigate = useNavigate();
   const completeChapter = useProgressStore((s) => s.completeChapter);
   const recordChoice = useProgressStore((s) => s.recordChoice);
   const { locked } = useAppLock();
-  const { play, stop, isPlaying, isStudioAudio, error: audioError } = useStoryAudio(!locked);
-  const ageBand = useSettingsStore((s) => s.ageBand);
+  const { play, stop, pause, resume, isPlaying, isPaused, isStudioAudio, error: audioError, progress, activeCue } = useStoryAudio(!locked);
 
   const story = storyId ? getStory(storyId) : undefined;
   const chapterIndex = Number(chapterIndexParam ?? 0);
@@ -32,12 +60,23 @@ export function ChapterReader() {
   const [pageIndex, setPageIndex] = useState(0);
   const [choiceIndex, setChoiceIndex] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [audioPage, setAudioPage] = useState<StoryAudioPage | null>(null);
 
   /** A narração muda conforme a faixa etária definida na Área dos Pais. */
   const pages = useMemo(() => (chapter ? pagesForAge(chapter, ageBand) : []), [chapter, ageBand]);
 
   const totalSteps = useMemo(() => pages.length + (chapter?.choice ? 1 : 0), [pages, chapter]);
   const atChoiceStep = chapter ? pageIndex === pages.length : false;
+
+  useEffect(() => {
+    let cancelled = false;
+    setAudioPage(null);
+    if (story && chapter && pages[pageIndex]) {
+      void loadStoryAudioPage(story.id, chapter.id, pageIndex, ageBand, pages[pageIndex])
+        .then(page => { if (!cancelled) setAudioPage(page); });
+    }
+    return () => { cancelled = true; };
+  }, [story, chapter, pageIndex, ageBand, pages]);
 
   if (!story || !chapter) return <Navigate to="/app/historias" replace />;
 
@@ -65,7 +104,7 @@ export function ChapterReader() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-cream pb-8">
+    <div className="flex min-h-screen flex-col bg-cream pb-28">
       <TopBar title={story.title} backTo={`/app/historia/${story.id}`} right={<span className="text-lg">Aa</span>} />
       <div className="px-4">
         <ProgressBar value={overallProgress} color="var(--color-green)" />
@@ -77,7 +116,9 @@ export function ChapterReader() {
             <motion.div key={`page-${pageIndex}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4">
               <Scene scene={chapter.scene} artId={chapter.id} showGuide height={220} />
               <h2 className="font-display text-center text-lg font-bold text-navy">{chapter.title}</h2>
-              <p className="text-center text-lg leading-relaxed text-navy-deep">{pages[pageIndex]}</p>
+              <p className="text-center text-lg leading-relaxed text-navy-deep">
+                <NarratedText text={pages[pageIndex]} cue={activeCue} />
+              </p>
             </motion.div>
           ) : (
             <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4">
@@ -114,32 +155,61 @@ export function ChapterReader() {
           <button
             onClick={() => {
               if (isPlaying) {
-                stop();
+                pause();
+              } else if (isPaused) {
+                resume();
               } else {
-                const audioUrl = getStoryAudioPath(story.id, chapter.id, pageIndex, ageBand);
-                play(audioUrl, pages[pageIndex]);
+                const text = pages[pageIndex];
+                const currentAudioPage = audioPage?.chapterId === chapter.id
+                  && audioPage.pageIndex === pageIndex
+                  && audioPage.ageBand === ageBand
+                  ? audioPage
+                  : null;
+                play({
+                  url: currentAudioPage
+                    ? getStoryAudioPageUrl(currentAudioPage)
+                    : undefined,
+                  text,
+                  durationMs: currentAudioPage?.durationMs,
+                  cues: currentAudioPage?.cues,
+                });
               }
             }}
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange text-white shadow-[0_6px_0_0_var(--color-orange-dark)] transition active:scale-95"
-            aria-label={isPlaying ? 'Pausar narração' : 'Ouvir narração'}
+            aria-label={isPlaying ? 'Pausar narração' : isPaused ? 'Retomar narração' : 'Ouvir narração'}
+            disabled={locked}
           >
             {isPlaying ? '⏸️' : '▶️'}
           </button>
         )}
         {!atChoiceStep && (
-          <p role="status" className="flex-1 text-sm font-semibold text-navy">
-            {audioError ?? (isPlaying
-              ? isStudioAudio
-                ? 'Ouvindo narração de estúdio...'
-                : 'Narrando...'
-              : 'Toque para ouvir')}
-          </p>
+          <div className="flex flex-1 flex-col gap-1">
+            <p role="status" className="text-sm font-semibold text-navy">
+              {audioError ?? (isPaused ? 'Narração pausada. Toque para continuar.' : isPlaying
+                ? isStudioAudio
+                  ? 'Ouvindo narração de estúdio...'
+                  : 'Narrando...'
+                : audioPage ? 'Toque para ouvir' : 'Voz de estúdio em revisão. Toque para ouvir com a voz brasileira do aparelho.')}
+            </p>
+            {(isPlaying || isPaused) && (
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-sand"
+                role="progressbar"
+                aria-label="Progresso da narração"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress * 100)}
+              >
+                <div className="h-full rounded-full bg-navy transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+              </div>
+            )}
+          </div>
         )}
         <Button
           onClick={handleNext}
           disabled={atChoiceStep && (choiceIndex === null || !revealed)}
           className={atChoiceStep ? 'flex-1' : ''}
-          icon={atChoiceStep ? undefined : undefined}
+          aria-label={atChoiceStep ? 'Continuar' : pageIndex + 1 >= totalSteps ? 'Concluir capítulo' : 'Próxima página'}
         >
           {atChoiceStep ? 'Continuar' : pageIndex + 1 >= totalSteps ? 'Concluir' : '→'}
         </Button>
