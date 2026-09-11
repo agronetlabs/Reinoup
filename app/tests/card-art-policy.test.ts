@@ -46,7 +46,7 @@ describe('card artwork policy', () => {
       scene: gn01Criacao.cover, artId: gn01Criacao.id, height: 150,
     }));
     expect(pending).toContain('data-art-status="legacy-fallback"');
-    expect(pending).toContain('/generated-1789149714768-9qjjj.png');
+    expect(pending).toContain('/story-art/genesis/gn-01/cover.svg');
     const approved = renderToStaticMarkup(createElement(Scene, {
       scene: gn02AdaoEva.cover, artId: gn02AdaoEva.id,
     }));
