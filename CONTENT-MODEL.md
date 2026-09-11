@@ -1,4 +1,4 @@
-﻿# Modelo de Conteúdo — ReinoUp
+# Modelo de Conteúdo — ReinoUp
 
 Como o conteúdo bíblico do ReinoUp é estruturado, escrito e adicionado.
 Vale para Gênesis e para todo livro que vier depois.

@@ -1,4 +1,4 @@
-﻿# ReinoUp — instruções do repositório
+# ReinoUp — instruções do repositório
 
 App de Bíblia infantil gamificado, em português, para crianças de 5 a 10 anos.
 Posicionamento: *"a Bíblia que seu filho abre sozinho"*. Quem paga é o pai; quem

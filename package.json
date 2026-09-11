@@ -1,0 +1,12 @@
+{
+  "name": "reinoup",
+  "private": true,
+  "scripts": {
+    "postinstall": "cd app && npm install",
+    "build": "cd app && ./node_modules/.bin/tsc -b && ./node_modules/.bin/vite build",
+    "dev": "cd app && ./node_modules/.bin/vite"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

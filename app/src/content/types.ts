@@ -1,4 +1,4 @@
-﻿import type { Valor } from './valores';
+import type { Valor } from './valores';
 
 export type { Valor } from './valores';
 

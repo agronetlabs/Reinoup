@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Cria um pedido no PagBank com QR Code PIX para uma assinatura do ReinoUp.
  *
  * Roda como Cloudflare Pages Function, no mesmo padrão da integração Stripe.

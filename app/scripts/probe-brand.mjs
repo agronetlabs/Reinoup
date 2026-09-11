@@ -1,4 +1,4 @@
-﻿import sharp from "sharp";
+import sharp from "sharp";
 const f = "C:/Users/user/Desktop/APP-RAMON/02. Reino UP/01. Identidade Visual/logo.png";
 const m = await sharp(f).metadata();
 const s = await sharp(f).stats();

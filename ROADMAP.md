@@ -1,4 +1,4 @@
-﻿# ReinoUp — estado e caminho
+# ReinoUp — estado e caminho
 
 Atualizado em 23/08/2026. Handoff para continuidade no GitHub Copilot Pro.
 

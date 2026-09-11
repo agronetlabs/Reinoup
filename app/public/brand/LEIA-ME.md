@@ -1,4 +1,4 @@
-﻿# Assets oficiais da marca
+# Assets oficiais da marca
 
 Coloque aqui os dois arquivos, com estes nomes exatos:
 

@@ -1,4 +1,4 @@
-﻿import type { Season, SeasonId, SensibilidadeTag } from './types';
+import type { Season, SeasonId, SensibilidadeTag } from './types';
 import type { Valor } from './valores';
 
 /**
