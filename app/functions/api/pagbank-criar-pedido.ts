@@ -11,28 +11,17 @@
  * Docs: https://developer.pagbank.com.br/reference/criar-pedido
  */
 
-interface Env {
+import { PAID_PLAN_ID, PRICE_CENTS, isCycle } from '../../shared/billing';
+import { authenticateFamily, type SupabaseEnv } from './_supabase';
+
+interface Env extends SupabaseEnv {
   PAGBANK_TOKEN: string;
   /** 'sandbox' (padrão) ou 'production'. */
   PAGBANK_ENV?: string;
 }
 
-type PlanId = 'essencial' | 'completo' | 'familia';
-type Cycle = 'mensal' | 'anual';
-
-const PLAN_PRICES: Record<PlanId, { name: string; monthlyPrice: number }> = {
-  essencial: { name: 'ReinoUp Essencial', monthlyPrice: 10.9 },
-  completo: { name: 'ReinoUp Completo', monthlyPrice: 19.9 },
-  familia: { name: 'ReinoUp Família', monthlyPrice: 29.9 },
-};
-
-const ANNUAL_DISCOUNT = 0.2;
-
 /** O QR Code expira em 30 min — tempo de sobra sem deixar cobrança pendurada. */
 const MINUTOS_ATE_EXPIRAR = 30;
-
-const isPlanId = (v: unknown): v is PlanId => v === 'essencial' || v === 'completo' || v === 'familia';
-const isCycle = (v: unknown): v is Cycle => v === 'mensal' || v === 'anual';
 
 /** CPF sem máscara, 11 dígitos — o PagBank exige `tax_id` para emitir PIX. */
 function limparCpf(valor: unknown): string | null {
@@ -41,14 +30,14 @@ function limparCpf(valor: unknown): string | null {
   return digitos.length === 11 ? digitos : null;
 }
 
-function baseUrl(env: Env): string {
+export function baseUrl(env: Pick<Env, 'PAGBANK_ENV'>): string {
   return env.PAGBANK_ENV === 'production'
     ? 'https://api.pagseguro.com'
     : 'https://sandbox.api.pagseguro.com';
 }
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
-  if (!env.PAGBANK_TOKEN) {
+  if (!env.PAGBANK_TOKEN || (env.PAGBANK_ENV && !['sandbox', 'production'].includes(env.PAGBANK_ENV))) {
     return Response.json(
       { error: 'Pagamento via PagBank não configurado neste ambiente (falta PAGBANK_TOKEN).' },
       { status: 503 }
@@ -64,9 +53,11 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
   const { planId, cycle, nome, email, cpf, familyId } = (body ?? {}) as Record<string, unknown>;
 
-  if (!isPlanId(planId) || !isCycle(cycle)) {
+  if (planId !== PAID_PLAN_ID || !isCycle(cycle)) {
     return Response.json({ error: 'planId ou cycle inválido.' }, { status: 400 });
   }
+  const familia = await authenticateFamily(request, env, familyId);
+  if (familia instanceof Response) return familia;
   if (typeof nome !== 'string' || nome.trim().length < 3) {
     return Response.json({ error: 'Informe o nome completo do responsável.' }, { status: 400 });
   }
@@ -78,23 +69,15 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     return Response.json({ error: 'Informe um CPF válido (11 dígitos).' }, { status: 400 });
   }
 
-  const plan = PLAN_PRICES[planId];
   const origin = new URL(request.url).origin;
 
   // Valor em centavos. Anual = 12 meses com 20% de desconto.
-  const centavos =
-    cycle === 'anual'
-      ? Math.round(plan.monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT) * 100)
-      : Math.round(plan.monthlyPrice * 100);
+  const centavos = PRICE_CENTS[cycle];
 
   const expiraEm = new Date(Date.now() + MINUTOS_ATE_EXPIRAR * 60_000).toISOString();
-  // O familyId viaja no reference_id para o webhook saber de quem é o pagamento.
-  // Sem conta remota vai 'anon' e a vinculação fica manual.
-  //
-  // Ele fica por ÚLTIMO de propósito: é um UUID e tem hífen dentro, então quem
-  // lê precisa juntar o resto — ver `lerReferencia` em _supabase.ts.
-  const familia = typeof familyId === 'string' && familyId.length > 0 ? familyId : 'anon';
-  const referenceId = `reinoup-${planId}-${cycle}-${Date.now()}-${familia}`;
+  // 63 caracteres: versão/ciclo, família compacta e nonce, dentro do limite de 64 do PagBank.
+  const nonce = crypto.randomUUID().replaceAll('-', '').slice(0, 24);
+  const referenceId = `ru2-${cycle === 'mensal' ? 'm' : 'a'}-${familia.replaceAll('-', '')}-${nonce}`;
 
   const pedido = {
     reference_id: referenceId,
@@ -102,7 +85,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     items: [
       {
         reference_id: `${planId}-${cycle}`,
-        name: `${plan.name} (${cycle})`,
+        name: `ReinoUp (${cycle}) — conta do responsável`,
         quantity: 1,
         unit_amount: centavos,
       },
@@ -111,45 +94,42 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     notification_urls: [`${origin}/api/pagbank-webhook`],
   };
 
-  const resposta = await fetch(`${baseUrl(env)}/orders`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.PAGBANK_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(pedido),
-  });
-
-  const dados = await resposta.json<{
-    id?: string;
-    qr_codes?: { id: string; text: string; links?: { rel: string; href: string; media?: string }[] }[];
-    error_messages?: { description?: string; parameter_name?: string }[];
-  }>();
-
-  if (!resposta.ok || !dados.qr_codes?.length) {
-    const detalhe = dados.error_messages?.[0];
-    return Response.json(
-      {
-        error: detalhe?.description
-          ? `PagBank recusou o pedido: ${detalhe.description}${detalhe.parameter_name ? ` (${detalhe.parameter_name})` : ''}`
-          : 'Não foi possível gerar o PIX.',
+  try {
+    const resposta = await fetch(`${baseUrl(env)}/orders`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.PAGBANK_TOKEN}`,
+        'Content-Type': 'application/json',
       },
-      { status: 502 }
-    );
+      body: JSON.stringify(pedido),
+    });
+
+    const dados = await resposta.json() as {
+      id?: string;
+      qr_codes?: { id: string; text: string; links?: { rel: string; href: string; media?: string }[] }[];
+    };
+
+    if (!resposta.ok || !dados.id || !dados.qr_codes?.[0]?.text) {
+      return Response.json(
+        { error: 'Não foi possível gerar o PIX. Confira os dados e tente novamente.' },
+        { status: 502 }
+      );
+    }
+
+    const qr = dados.qr_codes[0];
+    const imagem = qr.links?.find((l) => l.media === 'image/png')?.href ?? null;
+
+    return Response.json({
+      orderId: dados.id,
+      referenceId,
+      copiaECola: qr.text,
+      imagemQrCode: imagem,
+      expiraEm,
+      valorCentavos: centavos,
+    });
+  } catch {
+    return Response.json({ error: 'Não foi possível gerar o PIX. Tente novamente.' }, { status: 502 });
   }
-
-  const qr = dados.qr_codes[0];
-  const imagem = qr.links?.find((l) => l.media === 'image/png')?.href ?? null;
-
-  return Response.json({
-    orderId: dados.id,
-    referenceId,
-    // "Copia e cola" — é o que o pai realmente usa no app do banco.
-    copiaECola: qr.text,
-    imagemQrCode: imagem,
-    expiraEm,
-    valorCentavos: centavos,
-  });
 };
 
 /**
@@ -164,4 +144,3 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
  * a primeira venda. Antes de escalar, migrar para Assinaturas:
  * https://developer.pagbank.com.br/reference/criar-assinatura
  */
-

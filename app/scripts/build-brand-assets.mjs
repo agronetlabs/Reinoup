@@ -1,8 +1,11 @@
 ﻿import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
+import { dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const SRC = "C:/Users/user/Desktop/APP-RAMON/02. Reino UP/01. Identidade Visual/";
-const OUT = "public/brand/";
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const SRC = join(ROOT, "02. Reino UP", "01. Identidade Visual") + sep;
+const OUT = join(ROOT, "app", "public", "brand") + sep;
 await mkdir(OUT, { recursive: true });
 
 async function tirarFundoBranco(entrada, tolerancia = 12) {
@@ -33,3 +36,5 @@ await salvar(sharp(m).extract({ left: 0, top: 0, width: md.width, height: Math.r
 
 console.log("LOGO");
 await salvar((await tirarFundoBranco(SRC + "logo.png")).trim({ threshold: 1 }), "logo", 804);
+
+await import("./build-mascot-fallbacks.mjs");

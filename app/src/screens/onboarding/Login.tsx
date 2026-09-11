@@ -48,7 +48,7 @@ export function Login() {
       <TopBar backTo="/publico" />
       <div className="flex flex-1 flex-col px-6 pb-8">
         <div className="mb-6 text-center">
-          <MascotOficial pose="acenando" size={110} />
+          <MascotOficial pose="acenando" size={110} className="mx-auto" />
           <h1 className="font-display mt-2 text-2xl font-extrabold text-navy">Bem-vindo(a) ao ReinoUp!</h1>
         </div>
 
@@ -141,5 +141,4 @@ function AppleIcon() {
     </svg>
   );
 }
-
 

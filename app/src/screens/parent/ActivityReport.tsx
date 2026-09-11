@@ -1,78 +1,43 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useProgressStore } from '../../store/progressStore';
 import { useAuthStore } from '../../store/authStore';
-import { currentWeekDates, addDays, weekdayLabel, minutesToLabel } from '../../lib/dates';
-import { VALORES, type Valor } from '../../content/valores';
+import { addDays, weekdayLabel, minutesToLabel, todayKey } from '../../lib/dates';
+import { activityReportPeriod, activityReportSummary, copyActivityReport, weeklyActivityReport } from '../../lib/activity-report';
 import { STORIES } from '../../content/stories';
 
 export function ActivityReport() {
   const childProfile = useAuthStore((s) => s.childProfile);
   const activityLog = useProgressStore((s) => s.activityLog);
   const activityMinutes = useProgressStore((s) => s.activityMinutes);
-  const storiesProgress = useProgressStore((s) => s.stories);
+  const quizHistory = useProgressStore((s) => s.quizHistory);
   const [weekOffset, setWeekOffset] = useState(0);
-  const [copied, setCopied] = useState(false);
+  const [share, setShare] = useState<{ text: string; status: 'copying' | 'copied' | 'error' } | null>(null);
+  const copyRequest = useRef(0);
 
   const childName = childProfile?.name ?? 'Seu filho';
 
-  const weekDates = useMemo(() => currentWeekDates(addDays(new Date(), weekOffset * 7)), [weekOffset]);
-  const weekSet = new Set(weekDates);
+  const today = todayKey();
+  const report = useMemo(() => weeklyActivityReport(
+    { activityLog, activityMinutes, quizHistory }, STORIES,
+    addDays(new Date(`${today}T12:00:00`), weekOffset * 7),
+  ), [activityLog, activityMinutes, quizHistory, today, weekOffset]);
+  const { weekDates, readings: historias, quizzes, verses: versiculos, missions: missoes,
+    totalMinutes, maxMinutes, values: valoresDaSemana } = report;
+  const summary = activityReportSummary(childName, report);
+  const shareStatus = share?.text === summary ? share.status : null;
 
-  const entriesThisWeek = activityLog.filter((e) => weekSet.has(e.date));
-  const historias = entriesThisWeek.filter((e) => e.kind === 'historia').length;
-  const quizzes = entriesThisWeek.filter((e) => e.kind === 'quiz').length;
-  const versiculos = entriesThisWeek.filter((e) => e.kind === 'versiculo').length;
-  const missoes = entriesThisWeek.filter((e) => e.kind === 'missao').length;
-
-  const totalMinutes = weekDates.reduce((sum, d) => sum + (activityMinutes[d] ?? 0), 0);
-  const maxMinutes = Math.max(1, ...weekDates.map((d) => activityMinutes[d] ?? 0));
-
-  // Identifica quais virtudes / valores foram trabalhados
-  const valoresDaSemana = useMemo(() => {
-    const counts: Partial<Record<Valor, number>> = {};
-
-    STORIES.forEach((s) => {
-      const p = storiesProgress[s.id];
-      if (p && (p.completed || p.chaptersCompleted > 0)) {
-        counts[s.valor] = (counts[s.valor] ?? 0) + 1;
-        s.valoresSecundarios?.forEach((v) => {
-          counts[v] = (counts[v] ?? 0) + 1;
-        });
-      }
-    });
-
-    if (Object.keys(counts).length === 0) {
-      counts['identidade'] = 1;
-      counts['confianca'] = 1;
-      counts['obediencia'] = 1;
-    }
-
-    return Object.entries(counts).map(([v, count]) => ({
-      info: VALORES[v as Valor],
-      count,
-    }));
-  }, [storiesProgress]);
+  useEffect(() => () => { copyRequest.current += 1; }, [summary]);
 
   async function handleShareSummary() {
-    const text = `📖 *Relatório ReinoUp de ${childName}*\n\n` +
-      `⏱️ Tempo no app: ${minutesToLabel(totalMinutes)}\n` +
-      `📚 Histórias exploradas: ${historias}\n` +
-      `🎯 Quizzes bíblicos: ${quizzes}\n` +
-      `✨ Valores aprendidos: ${valoresDaSemana.slice(0, 3).map((v) => v.info.label).join(', ')}\n\n` +
-      `_A Palavra de Deus plantada no coração!_`;
-
-    try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2500);
-      }
-    } catch {
-      // Silencioso
+    const request = ++copyRequest.current;
+    setShare({ text: summary, status: 'copying' });
+    const copied = await copyActivityReport(summary, navigator.clipboard);
+    if (request === copyRequest.current) {
+      setShare({ text: summary, status: copied ? 'copied' : 'error' });
     }
   }
 
@@ -90,7 +55,7 @@ export function ActivityReport() {
             ‹
           </button>
           <span className="font-display text-sm font-bold text-navy">
-            {weekOffset === 0 ? 'Esta semana' : weekOffset === -1 ? 'Semana passada' : `${weekOffset} semanas`}
+            {weekOffset === 0 ? 'Esta semana' : weekOffset === -1 ? 'Semana passada' : `${Math.abs(weekOffset)} semanas atrás`}
           </span>
           <button
             className="flex h-9 w-9 items-center justify-center rounded-full text-xl font-bold text-navy hover:bg-navy/5 disabled:opacity-30"
@@ -101,13 +66,14 @@ export function ActivityReport() {
             ›
           </button>
         </div>
+        <p className="text-center text-sm text-navy">{activityReportPeriod(weekDates)}</p>
 
         {/* Resumo Numérico das Atividades */}
         <Card>
           <div className="grid grid-cols-4 divide-x divide-navy/10 text-center">
             <div>
               <p className="font-display text-2xl font-extrabold text-navy">{historias}</p>
-              <p className="text-xs font-semibold text-navy/50">Histórias</p>
+              <p className="text-xs font-semibold text-navy/50">Leituras</p>
             </div>
             <div>
               <p className="font-display text-2xl font-extrabold text-navy">{quizzes}</p>
@@ -122,6 +88,10 @@ export function ActivityReport() {
               <p className="text-xs font-semibold text-navy/50">Missões</p>
             </div>
           </div>
+          <p className="mt-3 text-sm text-navy">
+            {report.hasActivity ? 'Leituras de capítulos incluem repetições.' : 'Nenhuma atividade registrada nesta semana.'}
+            {' '}O relatório usa o histórico disponível; registros antigos podem estar incompletos.
+          </p>
         </Card>
 
         {/* Gráfico Semanal de Tempo de Tela */}
@@ -133,10 +103,10 @@ export function ActivityReport() {
             </span>
           </div>
           <div className="mt-4 flex items-end justify-between gap-2" style={{ height: 110 }}>
-            {weekDates.map((d) => {
-              const min = activityMinutes[d] ?? 0;
-              const h = Math.max(6, (min / maxMinutes) * 85);
-              const isToday = d === new Date().toISOString().slice(0, 10);
+            {weekDates.map((d, index) => {
+              const min = report.minutes[index];
+              const h = (min / maxMinutes) * 85;
+              const isToday = d === today;
               return (
                 <div key={d} className="flex flex-1 flex-col items-center gap-1.5">
                   <span className="text-[9px] font-bold tabular-nums text-navy/40">
@@ -160,15 +130,21 @@ export function ActivityReport() {
           <div className="flex items-center gap-2">
             <BrandIcon name="fe" size={22} />
             <p className="font-display text-base font-extrabold text-navy">
-              Valores trabalhados no coração
+              Temas das histórias com quiz
             </p>
           </div>
-          <p className="mt-1 text-xs text-navy/60">
-            Acompanhe as virtudes cristãs que {childName} tem aprendido nas histórias:
+          <p className="mt-1 text-sm text-navy">
+            Valores presentes nas histórias cujos quizzes {childName} respondeu nesta semana.
+            Cada história conta uma vez, mesmo com quizzes repetidos. Isso não mede domínio dos valores.
           </p>
 
           <div className="mt-3 flex flex-col gap-2.5">
-            {valoresDaSemana.slice(0, 4).map(({ info, count }) => (
+            {valoresDaSemana.length === 0 && (
+              <p className="text-sm text-navy">
+                Ainda não há quizzes associados a histórias nesta semana. Leituras sem identificação da história não permitem listar seus valores.
+              </p>
+            )}
+            {valoresDaSemana.map(({ info, count }) => (
               <div
                 key={info.id}
                 className="flex items-start gap-3 rounded-2xl border border-navy/5 bg-cream/50 p-3"
@@ -183,11 +159,11 @@ export function ActivityReport() {
                   <div className="flex items-center justify-between">
                     <p className="font-display text-sm font-bold text-navy">{info.label}</p>
                     <span className="text-[11px] font-extrabold text-navy/50">
-                      {count} {count === 1 ? 'estudo' : 'estudos'}
+                      {count} {count === 1 ? 'história' : 'histórias'}
                     </span>
                   </div>
                   <p className="text-xs text-navy/70 leading-snug mt-0.5">
-                    {info.descricaoPai}
+                    Tema: {info.frase}
                   </p>
                 </div>
               </div>
@@ -206,7 +182,7 @@ export function ActivityReport() {
           <p className="mt-2 text-xs font-semibold leading-relaxed text-navy-deep">
             Ao jantar ou antes de dormir, pergunte a {childName}:{' '}
             <span className="italic text-orange font-bold">
-              “Qual foi a história mais legal que você ouviu no ReinoUp essa semana? O que você aprendeu com ela?”
+              “Qual história você gostaria de ler comigo? O que podemos aprender com ela?”
             </span>
           </p>
         </Card>
@@ -217,10 +193,25 @@ export function ActivityReport() {
           size="md"
           full
           onClick={handleShareSummary}
+          disabled={shareStatus === 'copying'}
           className="gap-2"
         >
-          {copied ? '✓ Resumo copiado para o WhatsApp!' : '📋 Compartilhar resumo da semana'}
+          {shareStatus === 'copying' ? 'Copiando resumo…' : '📋 Copiar resumo da semana'}
         </Button>
+        <p role="status" className="text-sm text-navy">
+          {shareStatus === 'copied' && 'Resumo copiado! Cole no aplicativo em que deseja compartilhar.'}
+          {shareStatus === 'error' && 'Não foi possível copiar. Tente novamente ou selecione e copie o resumo abaixo.'}
+        </p>
+        {shareStatus === 'error' && (
+          <textarea
+            aria-label="Resumo da semana para copiar"
+            readOnly
+            value={summary}
+            rows={10}
+            className="w-full rounded-2xl border border-border-default bg-surface-default p-3 text-base text-navy"
+            onFocus={(event) => event.currentTarget.select()}
+          />
+        )}
       </div>
     </div>
   );

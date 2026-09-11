@@ -3,11 +3,19 @@ export interface StoryArtAsset {
   focalPoint?: string;
   guide?: 'left' | 'right';
   src: string;
+  fallbackSrc?: string;
+}
+
+export function resolveStoryArtSource(art: StoryArtAsset, failedSources: readonly string[]): string | undefined {
+  if (!failedSources.includes(art.src)) return art.src;
+  if (art.fallbackSrc && !failedSources.includes(art.fallbackSrc)) return art.fallbackSrc;
+  return undefined;
 }
 
 const rawBase = import.meta.env?.BASE_URL || '/';
 const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 const creation = `${base}story-art/genesis/gn-01`;
+const genesis = `${base}story-art/genesis`;
 const bonus = `${base}story-art/bonus`;
 
 const STORY_ART: Record<string, StoryArtAsset> = {
@@ -48,6 +56,177 @@ const STORY_ART: Record<string, StoryArtAsset> = {
     alt: 'Adão e Eva contemplando o jardim criado por Deus',
     focalPoint: '50% 52%',
     src: `${creation}/05-deus-criou-voce.svg`,
+  },
+
+  // ============================================================
+  // Gênesis 02: Adão e Eva
+  // ============================================================
+  'gn-02-adao-eva': {
+    alt: 'Adão e Eva no jardim diante da escolha, com a árvore e a serpente ao fundo',
+    focalPoint: '50% 50%',
+    guide: 'right',
+    src: `${genesis}/gn-02/cover.webp`,
+    fallbackSrc: `${genesis}/gn-02/cover.svg`,
+  },
+  'gn-02-c1': {
+    alt: 'Adão e Eva cuidando do jardim do Éden, cheio de árvores, água e vida',
+    focalPoint: '50% 54%',
+    guide: 'left',
+    src: `${genesis}/gn-02/01-jardim-cuidado.webp`,
+    fallbackSrc: `${genesis}/gn-02/01-jardim-cuidado.svg`,
+  },
+  'gn-02-c2': {
+    alt: 'A serpente conversa com Eva junto à árvore do fruto',
+    focalPoint: '52% 50%',
+    guide: 'right',
+    src: `${genesis}/gn-02/02-voz-serpente.webp`,
+    fallbackSrc: `${genesis}/gn-02/02-voz-serpente.svg`,
+  },
+  'gn-02-c3': {
+    alt: 'Adão e Eva se escondem entre as árvores depois de fazer uma escolha errada',
+    focalPoint: '50% 52%',
+    guide: 'left',
+    src: `${genesis}/gn-02/03-esconderijo.webp`,
+    fallbackSrc: `${genesis}/gn-02/03-esconderijo.svg`,
+  },
+  'gn-02-c4': {
+    alt: 'Adão e Eva seguem por um novo caminho, ainda cuidados por Deus',
+    focalPoint: '50% 55%',
+    src: `${genesis}/gn-02/04-novo-caminho.webp`,
+    fallbackSrc: `${genesis}/gn-02/04-novo-caminho.svg`,
+  },
+
+  // ============================================================
+  // Gênesis 03: Caim e Abel
+  // ============================================================
+  'gn-03-caim-abel': {
+    alt: 'Caim e Abel levam seus presentes ao Senhor em um campo com grãos e ovelhas',
+    focalPoint: '50% 50%',
+    guide: 'right',
+    src: `${genesis}/gn-03/cover.svg`,
+  },
+  'gn-03-c1': {
+    alt: 'Caim trabalha a terra e Abel cuida das ovelhas em campos vizinhos',
+    focalPoint: '50% 55%',
+    guide: 'left',
+    src: `${genesis}/gn-03/01-dois-irmaos.svg`,
+  },
+  'gn-03-c2': {
+    alt: 'Caim sente a raiva crescer diante do altar e precisa escolher o bem',
+    focalPoint: '50% 50%',
+    guide: 'right',
+    src: `${genesis}/gn-03/02-raiva-cresce.svg`,
+  },
+  'gn-03-c3': {
+    alt: 'Caim e Abel aparecem separados enquanto a escolha de pedir ajuda ainda é possível',
+    focalPoint: '50% 54%',
+    guide: 'left',
+    src: `${genesis}/gn-03/03-escolher-ajuda.svg`,
+  },
+  'gn-03-c4': {
+    alt: 'Deus vê a dor e protege a vida no campo silencioso sob as estrelas',
+    focalPoint: '50% 52%',
+    src: `${genesis}/gn-03/04-deus-protege.svg`,
+  },
+
+  // ============================================================
+  // Gênesis 04: Enoque
+  // ============================================================
+  'gn-04-enoque': {
+    alt: 'Enoque caminha com Deus por uma estrada iluminada entre colinas verdes',
+    focalPoint: '54% 50%',
+    guide: 'left',
+    src: `${genesis}/gn-04/cover.svg`,
+  },
+  'gn-04-c1': {
+    alt: 'Enoque vive com sua família e cuida da rotina em uma tenda no campo',
+    focalPoint: '50% 54%',
+    guide: 'right',
+    src: `${genesis}/gn-04/01-vida-comum.svg`,
+  },
+  'gn-04-c2': {
+    alt: 'Enoque anda perto de Deus passo a passo por uma estrada ao entardecer',
+    focalPoint: '52% 50%',
+    guide: 'left',
+    src: `${genesis}/gn-04/02-andar-com-deus.svg`,
+  },
+  'gn-04-c3': {
+    alt: 'Um passo de bondade e verdade na rotina de uma criança',
+    focalPoint: '50% 52%',
+    guide: 'right',
+    src: `${genesis}/gn-04/03-um-passo.svg`,
+  },
+  'gn-04-c4': {
+    alt: 'Enoque é levado para junto de Deus sob uma luz serena',
+    focalPoint: '50% 48%',
+    src: `${genesis}/gn-04/04-deus-levou.svg`,
+  },
+
+  // ============================================================
+  // Gênesis 05: Noé e a Arca
+  // ============================================================
+  'gn-05-noe': {
+    alt: 'A arca de Noé atravessa a chuva sob o arco-íris da promessa',
+    focalPoint: '50% 52%',
+    guide: 'left',
+    src: `${genesis}/gn-05/cover.svg`,
+  },
+  'gn-05-c1': {
+    alt: 'Noé ouve a orientação de Deus no campo diante da arca que vai construir',
+    focalPoint: '50% 52%',
+    guide: 'right',
+    src: `${genesis}/gn-05/01-noe-ouve.svg`,
+  },
+  'gn-05-c2': {
+    alt: 'Noé e sua família constroem uma arca enorme, peça por peça',
+    focalPoint: '50% 52%',
+    guide: 'left',
+    src: `${genesis}/gn-05/02-constroi-arca.svg`,
+  },
+  'gn-05-c3': {
+    alt: 'Noé recebe a família e os animais na arca antes da grande chuva',
+    focalPoint: '50% 52%',
+    guide: 'right',
+    src: `${genesis}/gn-05/03-entrar-confiar.svg`,
+  },
+  'gn-05-c4': {
+    alt: 'O arco-íris marca a promessa de Deus depois da chuva',
+    focalPoint: '50% 45%',
+    guide: 'left',
+    src: `${genesis}/gn-05/04-promessa.svg`,
+  },
+
+  // ============================================================
+  // Gênesis 06: A Torre de Babel
+  // ============================================================
+  'gn-06-babel': {
+    alt: 'A torre de Babel se ergue na planície de Sinar diante do céu aberto',
+    focalPoint: '50% 50%',
+    guide: 'right',
+    src: `${genesis}/gn-06/cover.svg`,
+  },
+  'gn-06-c1': {
+    alt: 'O povo de Babel trabalha junto falando a mesma língua e fazendo tijolos',
+    focalPoint: '50% 54%',
+    guide: 'left',
+    src: `${genesis}/gn-06/01-uma-lingua.svg`,
+  },
+  'gn-06-c2': {
+    alt: 'A torre cresce enquanto o orgulho toma o centro do projeto',
+    focalPoint: '50% 50%',
+    guide: 'right',
+    src: `${genesis}/gn-06/02-torre-orgulho.svg`,
+  },
+  'gn-06-c3': {
+    alt: 'Pessoas diferentes cooperam, dividem as tarefas e compartilham seus talentos',
+    focalPoint: '50% 52%',
+    guide: 'left',
+    src: `${genesis}/gn-06/03-cooperar.svg`,
+  },
+  'gn-06-c4': {
+    alt: 'As famílias seguem por caminhos diferentes e Deus continua cuidando',
+    focalPoint: '50% 52%',
+    src: `${genesis}/gn-06/04-muitas-linguas.svg`,
   },
 
   // ============================================================

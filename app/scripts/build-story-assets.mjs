@@ -5,6 +5,7 @@ import { getJoseSeusIrmaosScenes } from './story-art/jose-e-seus-irmaos.mjs';
 import { getMoisesMarVermelhoScenes } from './story-art/moises-mar-vermelho.mjs';
 import { getJonasGrandePeixeScenes } from './story-art/jonas-grande-peixe.mjs';
 import { getDanielCovaDosLeoesScenes } from './story-art/daniel-cova-dos-leoes.mjs';
+import { getGenesisNextScenes } from './story-art/genesis-next.mjs';
 
 const out = new URL('../public/story-art/genesis/gn-01/', import.meta.url);
 await mkdir(out, { recursive: true });
@@ -168,7 +169,22 @@ for (const [name, content] of Object.entries(scenes)) {
 }
 
 // ============================================================
-// 2. Histórias Bônus
+// 2. Gênesis — aulas 02 a 06
+// ============================================================
+const genesisNextStories = ['gn-02', 'gn-03', 'gn-04', 'gn-05', 'gn-06'];
+
+for (const folder of genesisNextStories) {
+  const targetDir = new URL(`../public/story-art/genesis/${folder}/`, import.meta.url);
+  await mkdir(targetDir, { recursive: true });
+  const genesisScenes = getGenesisNextScenes(folder);
+  for (const [name, content] of Object.entries(genesisScenes)) {
+    await writeFile(new URL(name, targetDir), content, 'utf8');
+    console.log(`  story-art/genesis/${folder}/${name}`);
+  }
+}
+
+// ============================================================
+// 3. Histórias Bônus
 // ============================================================
 const stories = [
   { folder: 'davi-golias', getScenes: getDaviGoliasScenes },
@@ -189,4 +205,4 @@ for (const { folder, getScenes } of stories) {
   }
 }
 
-console.log('✓ Todas as 42 ilustrações de histórias geradas com sucesso!');
+console.log('✓ Todas as 67 ilustrações de histórias geradas com sucesso!');

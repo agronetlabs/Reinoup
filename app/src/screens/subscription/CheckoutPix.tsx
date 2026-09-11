@@ -1,6 +1,7 @@
-﻿import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from '../../components/ui/Modal';
 import { BrandIcon } from '../../components/illustrations/BrandIcon';
+import { paymentHeaders } from '../../lib/payment-client';
 
 /**
  * Checkout por PIX (PagBank).
@@ -14,6 +15,7 @@ import { BrandIcon } from '../../components/illustrations/BrandIcon';
 
 interface CheckoutPixProps {
   aberto: boolean;
+  confirmado: boolean;
   planId: 'essencial' | 'completo' | 'familia';
   planNome: string;
   cycle: 'mensal' | 'anual';
@@ -41,6 +43,7 @@ function mascararCpf(valor: string): string {
 
 export function CheckoutPix({
   aberto,
+  confirmado,
   planId,
   planNome,
   cycle,
@@ -56,6 +59,14 @@ export function CheckoutPix({
   const [erro, setErro] = useState<string | null>(null);
   const [pix, setPix] = useState<PixGerado | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [agora, setAgora] = useState(Date.now());
+  const expirado = Boolean(pix && Date.parse(pix.expiraEm) <= agora);
+
+  useEffect(() => {
+    if (!pix) return;
+    const timer = setInterval(() => setAgora(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [pix]);
 
   async function gerarPix() {
     setErro(null);
@@ -63,7 +74,7 @@ export function CheckoutPix({
     try {
       const res = await fetch('/api/pagbank-criar-pedido', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await paymentHeaders(familyId),
         body: JSON.stringify({ planId, cycle, nome, email, cpf, familyId }),
       });
       const dados = (await res.json()) as Partial<PixGerado> & { error?: string };
@@ -83,7 +94,7 @@ export function CheckoutPix({
   }
 
   async function copiar() {
-    if (!pix) return;
+    if (!pix || expirado || confirmado) return;
     try {
       await navigator.clipboard.writeText(pix.copiaECola);
       setCopiado(true);
@@ -102,13 +113,20 @@ export function CheckoutPix({
 
   return (
     <Modal open={aberto} onClose={fechar}>
-      {!pix ? (
+      {confirmado ? (
+        <div className="flex flex-col gap-4 text-center" role="status">
+          <h2 className="font-display text-xl font-bold text-navy">Acesso confirmado!</h2>
+          <p className="text-sm text-navy">Sua conta já tem todos os recursos do ReinoUp.</p>
+          <button onClick={fechar} className="font-bold text-navy underline">Continuar</button>
+        </div>
+      ) : !pix ? (
         <div className="flex flex-col gap-4">
           <div>
             <h2 className="font-display text-xl font-bold text-navy">Pagar com PIX</h2>
-            <p className="mt-1 text-sm font-semibold text-navy/60">
+            <p className="mt-1 text-sm font-semibold text-navy/80">
               {planNome} · {cycle} · <span className="text-navy">R$ {valorFormatado}</span>
             </p>
+            <p className="mt-2 text-sm text-navy/80">Pagamento único por conta do responsável. Sem renovação automática.</p>
           </div>
 
           <label className="flex flex-col gap-1">
@@ -143,10 +161,10 @@ export function CheckoutPix({
               placeholder="000.000.000-00"
               className="rounded-2xl border-2 border-navy/10 px-4 py-3 font-semibold tabular-nums text-navy-deep outline-none focus:border-orange"
             />
-            <span className="text-xs text-navy/45">Exigido pelo banco para emitir o PIX.</span>
+            <span className="text-xs text-navy/80">Exigido pelo banco para emitir o PIX.</span>
           </label>
 
-          {erro && <p className="text-sm font-semibold text-red-soft">{erro}</p>}
+          {erro && <p role="alert" className="text-sm font-semibold text-navy">{erro}</p>}
 
           <button
             onClick={gerarPix}
@@ -160,13 +178,13 @@ export function CheckoutPix({
         <div className="flex flex-col items-center gap-4 text-center">
           <BrandIcon name="protecao" size={36} />
           <div>
-            <h2 className="font-display text-xl font-bold text-navy">PIX gerado</h2>
-            <p className="mt-1 text-sm font-semibold text-navy/60">
-              Abra o app do seu banco e pague com o código abaixo.
+            <h2 className="font-display text-xl font-bold text-navy">{expirado ? 'Código PIX expirado' : 'PIX gerado'}</h2>
+            <p className="mt-1 text-sm font-semibold text-navy/80">
+              {expirado ? 'Se já pagou, aguarde a confirmação antes de gerar outro código.' : `Total: R$ ${valorFormatado}. Abra o app do seu banco e pague com o código abaixo.`}
             </p>
           </div>
 
-          {pix.imagemQrCode && (
+          {!expirado && pix.imagemQrCode && (
             <img
               src={pix.imagemQrCode}
               alt="QR Code do PIX"
@@ -174,25 +192,26 @@ export function CheckoutPix({
             />
           )}
 
-          <p className="max-h-24 w-full overflow-y-auto break-all rounded-2xl bg-cream-dark p-3 text-left text-[11px] font-semibold text-navy-deep">
+          {!expirado && <p className="max-h-24 w-full overflow-y-auto break-all rounded-2xl bg-cream-dark p-3 text-left text-[11px] font-semibold text-navy-deep">
             {pix.copiaECola}
-          </p>
+          </p>}
 
           <button
             onClick={copiar}
-            className="w-full rounded-pill bg-navy py-3.5 font-display text-base font-bold text-white active:translate-y-[2px]"
+            disabled={expirado}
+            className="w-full rounded-pill bg-navy py-3.5 font-display text-base font-bold text-white active:translate-y-[2px] disabled:opacity-60"
           >
             {copiado ? 'Código copiado ✓' : 'Copiar código'}
           </button>
 
-          {erro && <p className="text-sm font-semibold text-red-soft">{erro}</p>}
+          {erro && <p role="alert" className="text-sm font-semibold text-navy">{erro}</p>}
 
-          <p className="text-xs leading-snug text-navy/50">
-            Depois de pagar, a confirmação chega em alguns segundos. Se o plano não liberar,
-            fale com a gente — o pagamento fica registrado.
+          <p role="status" className="text-xs leading-snug text-navy/80">
+            {expirado ? 'Feche esta janela para gerar outro PIX se ainda não pagou.' : `Código válido até ${new Date(pix.expiraEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.`}
+            {' '}Estamos consultando a confirmação do provedor. O acesso só é liberado após a confirmação.
           </p>
 
-          <button onClick={fechar} className="text-sm font-bold text-navy/60 underline">
+          <button onClick={fechar} className="text-sm font-bold text-navy/80 underline">
             Fechar
           </button>
         </div>
@@ -200,4 +219,3 @@ export function CheckoutPix({
     </Modal>
   );
 }
-

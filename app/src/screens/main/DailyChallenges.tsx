@@ -109,8 +109,7 @@ export function DailyChallenges() {
             <button
               disabled={coins < SHIELD_COST_COINS}
               onClick={() => {
-                buyShield();
-                sfx.coin();
+                if (buyShield()) sfx.coin();
               }}
               className="mt-4 min-h-11 w-full rounded-[var(--radius-lg)] border border-navy/10 px-4 py-2.5 text-sm font-bold text-navy disabled:opacity-40"
             >

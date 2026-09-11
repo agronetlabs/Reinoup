@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TopBar } from '../../components/ui/TopBar';
 import { CoinBadge } from '../../components/ui/CoinBadge';
-import { Mascot } from '../../components/mascot/Mascot';
+import { MascotOficial } from '../../components/mascot/MascotOficial';
 import { useProgressStore } from '../../store/progressStore';
 import { AVATAR_ITEMS, itemsByKind, getAvatarItem, type AvatarItemKind } from '../../content/avatar-items';
 import { getBadge } from '../../content/badges';
@@ -18,10 +18,8 @@ export function Avatar() {
   const avatar = useProgressStore((s) => s.avatar);
   const purchaseAvatarItem = useProgressStore((s) => s.purchaseAvatarItem);
   const equipAvatarItem = useProgressStore((s) => s.equipAvatarItem);
-  const [tab, setTab] = useState<AvatarItemKind>('outfit');
+  const [tab, setTab] = useState<AvatarItemKind>('background');
 
-  const outfitItem = getAvatarItem(avatar.outfit);
-  const accessoryItem = getAvatarItem(avatar.accessory ?? '');
   const backgroundItem = getAvatarItem(avatar.background);
 
   const unlockedListFor = (kind: AvatarItemKind) =>
@@ -47,12 +45,9 @@ export function Avatar() {
       <TopBar title="Meu Avatar" backTo="/app/perfil" right={<CoinBadge coins={coins} />} />
 
       <div className="flex flex-col items-center px-4">
-        <Mascot
-          size={180}
-          outfitColor={outfitItem?.value}
-          accessory={accessoryItem?.value}
-          background={backgroundItem?.value}
-        />
+        <div className="flex w-full justify-center rounded-3xl py-3" style={{ backgroundColor: backgroundItem?.value }}>
+          <MascotOficial size={180} recorte="inteiro" />
+        </div>
       </div>
 
       <div className="mt-4 flex gap-2 px-4">
@@ -67,6 +62,12 @@ export function Avatar() {
         ))}
       </div>
 
+      {tab !== 'background' && (
+        <p role="status" className="mt-4 px-4 text-center text-sm text-navy">
+          As roupas e os acessórios estão aguardando a arte oficial. Seus itens continuam guardados e nenhuma moeda será gasta aqui.
+        </p>
+      )}
+
       <div className="mt-4 grid grid-cols-4 gap-3 px-4">
         {itemsByKind(tab).map((item) => {
           const owned = unlockedListFor(tab).includes(item.id);
@@ -75,12 +76,13 @@ export function Avatar() {
             (tab === 'accessory' && avatar.accessory === item.id) ||
             (tab === 'background' && avatar.background === item.id);
           const badgeLocked = item.unlock.type === 'badge' && !owned;
+          const awaitingOfficialArt = item.kind !== 'background';
 
           return (
             <button
               key={item.id}
               onClick={() => selectItem(item.id)}
-              disabled={badgeLocked}
+              disabled={badgeLocked || awaitingOfficialArt}
               className={`flex flex-col items-center gap-1 rounded-2xl border-2 p-2 ${
                 equipped ? 'border-orange bg-orange-light/20' : 'border-navy/10 bg-white'
               } disabled:opacity-50`}
@@ -90,7 +92,8 @@ export function Avatar() {
                 style={{ background: item.kind === 'accessory' ? '#EFE6D2' : item.value }}
               />
               <span className="text-center text-[10px] font-bold leading-tight text-navy">{item.label}</span>
-              {!owned && item.unlock.type === 'coins' && (
+              {awaitingOfficialArt && <span className="text-xs font-semibold text-navy">Em preparação</span>}
+              {!awaitingOfficialArt && !owned && item.unlock.type === 'coins' && (
                 <span className="flex items-center gap-1 text-[10px] font-bold text-orange-dark">
                   {item.unlock.cost} <BrandIcon name="recompensas" size={12} />
                 </span>

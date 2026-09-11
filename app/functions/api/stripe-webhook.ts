@@ -1,109 +1,90 @@
-﻿/**
- * Recebe eventos do Stripe (assinatura criada, cancelada, pagamento falhou...).
- *
- * Configure no Dashboard do Stripe: Developers → Webhooks → Add endpoint
- *   URL: https://<seu-dominio>/api/stripe-webhook
- *   Eventos: checkout.session.completed, customer.subscription.updated,
- *            customer.subscription.deleted, invoice.payment_failed
- *
- * Precisa de STRIPE_WEBHOOK_SECRET (o "signing secret" que o Stripe mostra ao
- * criar o endpoint) como variável de ambiente no Cloudflare Pages.
- *
- * Grava a assinatura confirmada em subscriptions (ver _supabase.ts). Sem
- * SUPABASE_SERVICE_ROLE_KEY configurada, valida e responde 200, mas o plano
- * nao libera -- e um 500 seria pior, porque o Stripe reenviaria para sempre.
- */
+import { expectedAmount, isCycle, isFamilyId, isPlanId } from '../../shared/billing';
+import { endStripeSubscription, legacySubscription, registrarAssinaturaPaga, supabaseConfigurado, type SupabaseEnv } from './_supabase';
+import { verifyStripeSignature } from './_signature';
+import { STRIPE_API_VERSION } from './create-checkout-session';
 
-import { registrarAssinaturaPaga, type Ciclo, type PlanoId, type SupabaseEnv } from './_supabase';
-
-interface Env extends SupabaseEnv {
-  STRIPE_WEBHOOK_SECRET: string;
+interface Env extends SupabaseEnv { STRIPE_WEBHOOK_SECRET: string; STRIPE_SECRET_KEY: string }
+interface Metadata { planId?: string; cycle?: string; familyId?: string; priceVersion?: string }
+interface Invoice {
+  id: string; status: string; amount_paid: number; total: number; currency: string;
+  status_transitions: { paid_at: number | null };
+  lines: { data: { amount: number; period: { start: number; end: number } }[] };
+  parent?: { subscription_details?: { subscription?: string } };
+  subscription?: string;
 }
-
-async function verifyStripeSignature(payload: string, header: string | null, secret: string): Promise<boolean> {
-  if (!header) return false;
-
-  const parts = Object.fromEntries(
-    header.split(',').map((pair) => {
-      const [key, value] = pair.split('=');
-      return [key, value];
-    })
-  );
-  const timestamp = parts.t;
-  const signature = parts.v1;
-  if (!timestamp || !signature) return false;
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
-    'sign',
-  ]);
-  const signedPayload = `${timestamp}.${payload}`;
-  const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(signedPayload));
-  const expected = Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-
-  return expected === signature;
+interface Subscription {
+  id: string; status: string; metadata: Metadata; ended_at: number | null;
+  latest_invoice: Invoice | null;
+}
+interface Event {
+  id: string; type: string; created: number;
+  data: { object: {
+    id: string; subscription?: string; metadata?: Metadata; payment_status?: string;
+    parent?: Invoice['parent'];
+  } };
 }
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
-  if (!env.STRIPE_WEBHOOK_SECRET) {
-    return new Response('Webhook não configurado (falta STRIPE_WEBHOOK_SECRET).', { status: 503 });
+  if (!env.STRIPE_WEBHOOK_SECRET || !env.STRIPE_SECRET_KEY || !supabaseConfigurado(env)) {
+    return new Response('Webhook indisponível.', { status: 503 });
   }
-
-  const payload = await request.text();
-  const signatureHeader = request.headers.get('stripe-signature');
-  const valid = await verifyStripeSignature(payload, signatureHeader, env.STRIPE_WEBHOOK_SECRET);
-
-  if (!valid) {
+  const raw = await request.text();
+  if (!await verifyStripeSignature(raw, request.headers.get('stripe-signature'), env.STRIPE_WEBHOOK_SECRET)) {
     return new Response('Assinatura inválida.', { status: 400 });
   }
-
-  const event = JSON.parse(payload) as {
-    type: string;
-    data: {
-      object: {
-        id?: string;
-        amount_total?: number;
-        subscription?: string;
-        metadata?: { planId?: string; cycle?: string; familyId?: string };
-      };
-    };
-  };
-
-  // Só o checkout concluído libera acesso. Cancelamento e falha de pagamento
-  // entram quando houver renovação de verdade para acompanhar.
-  if (event.type === 'checkout.session.completed') {
-    const sessao = event.data.object;
-    const plano = sessao.metadata?.planId as PlanoId | undefined;
-    const ciclo = sessao.metadata?.cycle as Ciclo | undefined;
-
-    if (!plano || !ciclo || !sessao.id) {
-      console.error('[stripe-webhook] sessão sem metadata de plano/ciclo.');
-    } else {
-      const resultado = await registrarAssinaturaPaga(env, {
-        provedor: 'stripe',
-        referencia: sessao.id,
-        provedorId: sessao.subscription,
-        plano,
-        ciclo,
-        valorCentavos: sessao.amount_total ?? 0,
-        familyId: sessao.metadata?.familyId ?? null,
-      });
-
-      if (!resultado.ok) {
-        console.error(`[stripe-webhook] falhou ao gravar: ${resultado.detalhe}`);
-        // 500 faz o Stripe reenviar, que é o certo se o banco caiu.
-        return new Response('Falha ao registrar assinatura.', { status: 500 });
-      }
-      console.log(`[stripe-webhook] assinatura registrada: ${plano}/${ciclo}`);
+  let event: Event;
+  try { event = JSON.parse(raw); }
+  catch { return new Response('Corpo inválido.', { status: 400 }); }
+  if (!event?.data?.object || !event.id || !Number.isInteger(event.created)) return new Response('Evento inválido.', { status: 400 });
+  const supported = ['checkout.session.completed', 'checkout.session.async_payment_succeeded',
+    'invoice.paid', 'invoice.payment_failed', 'customer.subscription.updated', 'customer.subscription.deleted'];
+  if (!supported.includes(event.type)) return Response.json({ received: true });
+  const object = event.data.object;
+  if (event.type.startsWith('checkout.') && object.payment_status !== 'paid') return Response.json({ received: true });
+  const subscriptionId = event.type.startsWith('customer.subscription.') ? object.id
+    : object.subscription ?? object.parent?.subscription_details?.subscription;
+  if (typeof subscriptionId !== 'string' || !/^sub_[\w]+$/.test(subscriptionId)) return new Response('Assinatura ausente.', { status: 400 });
+  try {
+    // Não confiar na ordem de entrega: sempre reconciliar com o estado atual do provedor.
+    const response = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subscriptionId)}?expand[]=latest_invoice`, {
+      headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'Stripe-Version': STRIPE_API_VERSION },
+    });
+    if (!response.ok) return new Response('Falha ao consultar assinatura.', { status: 502 });
+    const subscription = await response.json() as Subscription;
+    if (subscription.id !== subscriptionId) return new Response('Assinatura divergente.', { status: 400 });
+    const ended = subscription.status === 'canceled' || subscription.status === 'unpaid' || subscription.status === 'incomplete_expired';
+    if (ended) {
+      const ok = await endStripeSubscription(env, subscriptionId, event.created, subscription.ended_at ?? event.created);
+      return new Response(ok ? 'ok' : 'Falha ao encerrar assinatura.', { status: ok ? 200 : 500 });
     }
-  } else {
-    console.log(`[stripe-webhook] evento ignorado: ${event.type}`);
+    const invoice = subscription.latest_invoice;
+    // Falha de renovação não cria outro período: o período já pago expira no banco.
+    if (!invoice || invoice.status !== 'paid') return Response.json({ received: true });
+    let metadata = subscription.metadata ?? {};
+    if (!metadata.familyId) {
+      // Checkouts antigos só gravavam metadata na sessão, não na assinatura.
+      const legacy = await legacySubscription(env, subscriptionId);
+      metadata = legacy ? { planId: legacy.plano, cycle: legacy.ciclo, familyId: legacy.family_id }
+        : event.type.startsWith('checkout.') ? object.metadata ?? {} : {};
+    }
+    const { planId, cycle, familyId, priceVersion } = metadata;
+    if (!isPlanId(planId) || !isCycle(cycle) || !isFamilyId(familyId)) return new Response('Metadata inválida.', { status: 400 });
+    const amount = expectedAmount(planId, cycle, priceVersion);
+    const line = invoice.lines?.data[0];
+    const paidAt = invoice.status_transitions?.paid_at;
+    if (amount === null || invoice.amount_paid !== amount || invoice.total !== amount || invoice.currency !== 'brl' ||
+        invoice.lines?.data.length !== 1 || line?.amount !== amount || !paidAt ||
+        !Number.isFinite(line.period?.end) || !Number.isFinite(line.period?.start) || line.period.end <= line.period.start) {
+      return new Response('Montante ou período inválido.', { status: 400 });
+    }
+    if (subscription.status !== 'active' && subscription.status !== 'past_due') return Response.json({ received: true });
+    const ok = await registrarAssinaturaPaga(env, {
+      provedor: 'stripe', referencia: subscriptionId, provedorId: subscriptionId, plano: planId, ciclo: cycle,
+      familyId, valorCentavos: amount, paidAt: new Date(paidAt * 1000).toISOString(),
+      validUntil: new Date(line.period.end * 1000).toISOString(), eventCreated: event.created,
+    });
+    return new Response(ok ? 'ok' : 'Falha ao registrar assinatura.', { status: ok ? 200 : 500 });
+  } catch {
+    return new Response('Falha temporária ao confirmar pagamento.', { status: 502 });
   }
-
-  return Response.json({ received: true });
 };
-
-
-

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -44,6 +44,7 @@ export function OrderGame() {
   const [placed, setPlaced] = useState<{ step: string; id: number }[]>([]);
   const [wrong, setWrong] = useState(false);
   const [won, setWon] = useState(false);
+  const rewarded = useRef(false);
 
   function pick(s: OrderSequence) {
     setSeq(s);
@@ -51,19 +52,21 @@ export function OrderGame() {
     setPlaced([]);
     setWrong(false);
     setWon(false);
+    rewarded.current = false;
   }
 
   const isComplete = useMemo(() => seq && placed.length === seq.steps.length, [seq, placed]);
 
   function place(item: { step: string; id: number }) {
     setPool((p) => p.filter((x) => x.id !== item.id));
-    setPlaced((p) => [...p, item]);
+    setPlaced((p) => p.some((x) => x.id === item.id) ? p : [...p, item]);
   }
 
   function checkOrRestart() {
-    if (!seq) return;
+    if (!seq || !isComplete || rewarded.current) return;
     const correct = placed.every((p, i) => p.id === i);
     if (correct) {
+      rewarded.current = true;
       setWon(true);
       recordGameWin(`Ordem Correta — ${seq.title}`);
     } else {

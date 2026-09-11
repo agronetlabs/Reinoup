@@ -63,7 +63,7 @@ export function StoryCover() {
           full
           size="lg"
           className="mt-6"
-          onClick={() => navigate(`/app/historia/${story.id}/capitulo/${nextChapterIndex}`)}
+          onClick={() => navigate(`/app/historia/${story.id}/capitulo/${isRereading ? 0 : nextChapterIndex}`)}
         >
           {isRereading ? 'Ler novamente' : 'Ler história'}
         </Button>

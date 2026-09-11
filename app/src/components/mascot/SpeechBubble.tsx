@@ -1,7 +1,6 @@
 ﻿import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { type MascotPose } from './Mascot';
-import { MascotOficial } from './MascotOficial';
+import { MascotOficial, type MascotPose } from './MascotOficial';
 
 interface SpeechBubbleProps {
   children: ReactNode;
@@ -32,4 +31,3 @@ export function SpeechBubble({ children, pose = 'feliz', tone = 'neutral', masco
     </motion.div>
   );
 }
-
