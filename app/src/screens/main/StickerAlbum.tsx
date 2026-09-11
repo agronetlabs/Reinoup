@@ -1,5 +1,5 @@
 import { TopBar } from '../../components/ui/TopBar';
-import { MotifIcon } from '../../components/illustrations/MotifIcon';
+import { ThreeDArtPlaceholder } from '../../components/illustrations/ThreeDArtPlaceholder';
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
 import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useProgressStore } from '../../store/progressStore';
@@ -36,7 +36,9 @@ export function StickerAlbum() {
                   unlocked ? 'border-gold bg-white' : 'border-navy/10 bg-navy/5'
                 }`}
               >
-                {unlocked ? <MotifIcon motif={motif} size={44} /> : <BrandIcon name="protecao" size={22} className="opacity-30" />}
+                {unlocked
+                  ? <ThreeDArtPlaceholder label={`Adesivo ${motif}`} compact className="rounded-2xl" />
+                  : <BrandIcon name="protecao" size={22} className="opacity-30" />}
               </div>
             );
           })}

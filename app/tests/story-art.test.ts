@@ -25,9 +25,10 @@ describe('cinematic story artwork', () => {
       expect(resolveStoryArtSource(art, ['/unrelated.webp'])).toBe(art.src);
     },
   );
-  test('existing vector-only artwork retains its fallback to Scene motifs', () => {
+  test('legacy vector metadata remains inspectable but is not treated as 3D art', () => {
     const art = getStoryArt('gn-01-criacao')!;
     expect(resolveStoryArtSource(art, [])).toBe(art.src);
     expect(resolveStoryArtSource(art, [art.src])).toBeUndefined();
+    expect(art.src.endsWith('.svg')).toBe(true);
   });
 });

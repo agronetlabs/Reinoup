@@ -218,7 +218,10 @@ de leitura, sem exceção: inclui Criação, Caim e Abel, histórias bloqueadas,
 quiz, escolha, jogos, desafios e recompensas. Os desenhos planos ainda exibidos
 são pendências de migração, não versões finais aprovadas; aplicar sombras ou
 converter o arquivo não substitui produzir a ilustração 3D.
-O primeiro lote autorizado para **amostras** contém apenas as quatro
+O app agora falha fechado para arte plana: superfícies de card, capa, leitura e
+seletores de jogos aceitam somente raster WebP 3D aprovado; quando a arte ainda
+não existe, mostram "Arte 3D em produção" em vez de promover SVG/motivo a
+versão final. O primeiro lote autorizado para **amostras** contém apenas as quatro
 alternativas de `gn-02-q2`: árvore com fruto, pão, água de rio e alimento animal.
 O mascote oficial de boné, a capa, as cenas existentes e os SVGs de fallback
 permanecem preservados. Não há novas imagens prontas nesta implementação.

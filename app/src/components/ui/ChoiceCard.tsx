@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { isApproved3DImageSource } from '../../../shared/card-art-policy';
 import type { Motif } from '../../content/types';
-import { MotifIcon } from '../illustrations/MotifIcon';
+import { ThreeDArtPlaceholder } from '../illustrations/ThreeDArtPlaceholder';
 import type { QuizCardImage } from '../../../shared/quiz-card-art';
 
 interface ChoiceCardProps {
@@ -19,7 +20,7 @@ interface ChoiceCardProps {
 export function ChoiceCard({ children, selected, correct, revealed, onClick, disabled, icon, image }: ChoiceCardProps) {
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
-  const showImage = image && failedSource !== image.src;
+  const showImage = image && isApproved3DImageSource(image.src) && failedSource !== image.src;
   const illustrated = Boolean(icon || image);
   let stateClasses = 'border-navy/10 bg-white';
   if (revealed && selected && correct) stateClasses = 'border-green bg-green-light';
@@ -59,10 +60,11 @@ export function ChoiceCard({ children, selected, correct, revealed, onClick, dis
               }}
             />
           ) : (
-            <div className={image ? 'flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 bg-cream' : undefined}>
-              {icon && <MotifIcon motif={icon} size={72} />}
-              {image && <span className="text-xs text-navy">Ilustração indisponível</span>}
-            </div>
+            <ThreeDArtPlaceholder
+              label={image?.alt ?? (icon ? 'Figura da resposta' : 'Ilustração')}
+              compact={Boolean(image)}
+              className={image ? 'aspect-[4/3]' : 'min-h-24'}
+            />
           )}
           <span className={image ? 'flex min-h-14 w-full items-center justify-center px-3 py-2 font-display text-base font-bold leading-tight' : 'text-sm leading-tight'}>{children}</span>
         </div>

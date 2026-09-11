@@ -62,18 +62,19 @@ describe('first four 3D quiz cards', () => {
     expect(registry.getApprovedQuizCardArt('gn-02-adao-eva', 'gn-02-q2', 4)).toBeUndefined();
   });
 
-  test('an image card keeps its label and the legacy icon-only card stays available', async () => {
+  test('an approved image card keeps its label and non-3D art is never rendered as a fallback', async () => {
     const { renderToStaticMarkup } = await import('react-dom/server');
     const { ChoiceCard } = await import('../src/components/ui/ChoiceCard');
     const illustrated = renderToStaticMarkup(
-      <ChoiceCard icon="grain" image={{ src: '/approved-test-art.webp', alt: 'Pães em uma cesta' }}>Todo o pão</ChoiceCard>,
+      <ChoiceCard icon="grain" image={{ src: '/story-art/genesis/gn-02/quiz/approved-test-art.webp', alt: 'Pães em uma cesta' }}>Todo o pão</ChoiceCard>,
     );
-    expect(illustrated).toContain('src="/approved-test-art.webp"');
+    expect(illustrated).toContain('src="/story-art/genesis/gn-02/quiz/approved-test-art.webp"');
     expect(illustrated).toContain('Todo o pão');
     expect(illustrated).toContain('alt="Pães em uma cesta"');
     expect(illustrated).not.toContain('<svg');
     const fallback = renderToStaticMarkup(<ChoiceCard icon="grain">Todo o pão</ChoiceCard>);
-    expect(fallback).toContain('<svg');
+    expect(fallback).toContain('Arte 3D em produção');
     expect(fallback).not.toContain('<img');
+    expect(fallback).not.toContain('<svg');
   });
 });

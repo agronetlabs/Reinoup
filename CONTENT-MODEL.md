@@ -119,8 +119,10 @@ e cena de leitura deve seguir esse acabamento, chamado pelo responsável de
 "Disney Club 3D". Inclui Criação, Caim e Abel, histórias bloqueadas, alternativas
 de quiz/escolha e figuras de jogos, desafios e recompensas. O conteúdo visual
 continua original e o mascote oficial não é redesenhado.
-Os SVGs existentes permanecem como fallback enquanto cada nova arte é produzida
-e aprovada; são uma pendência de migração, nunca uma exceção aprovada ao padrão.
+Os SVGs existentes permanecem no catálogo histórico, mas não são renderizados
+em áreas de card ou cena que exigem a direção 3D. Enquanto cada nova arte é
+produzida e aprovada, a interface mostra um estado explícito de arte em
+produção; SVG é uma pendência de migração, nunca uma exceção aprovada ao padrão.
 Sombras, gradientes ou converter SVG para WebP não tornam uma arte plana uma
 ilustração 3D. Não considerar uma tela visualmente concluída enquanto suas
 imagens principais dependerem desses desenhos provisórios.
@@ -134,9 +136,10 @@ produção e publicação continuam sujeitas às autorizações específicas aba
 | Cena de capítulo | WebP quando aprovado; SVG/motivos como fallback | Uma ação e uma emoção legíveis por cena |
 | Mascote | arte oficial de boné, separada da cena | Não sobrepor às imagens durante a leitura; reservar para orientação e feedback. Não redesenhar nem gerar junto com os personagens bíblicos |
 
-`MotifIcon` é o catálogo compartilhado: cada motivo é desenhado uma vez e serve
-cena, jogo da memória e quiz ilustrado. Motivo novo entra em `types.ts` **e**
-ganha um SVG em `MotifIcon.tsx`.
+`MotifIcon` permanece como catálogo histórico de motivos para autoria e migração,
+mas não é uma arte final e não pode ser renderizado em cards, capas, cenas,
+memória, adesivos ou quiz. Cada motivo que ocupar uma área de imagem precisa
+ganhar uma arte 3D WebP aprovada no inventário correspondente.
 
 O primeiro lote de amostras dos cards do piloto tem quatro imagens para
 `gn-02-q2`: árvore com fruto, pão assado, água de rio e alimento dos animais.
@@ -144,7 +147,8 @@ Não representar pão só por trigo nem alimento só pela figura do animal.
 Todas as alternativas devem ter o mesmo acabamento e destaque, sem pistas
 visuais de qual é a correta. Manter texto, controles e selo de acerto fora da arte.
 Produzir amostras não autoriza publicá-las: `app/shared/quiz-card-art.ts`
-separa o inventário do lote da lista de artes aprovadas, ainda vazia.
+separa o inventário do lote da lista de artes aprovadas, ainda vazia. O
+componente de card rejeita fontes que não sejam WebP 3D dentro de `story-art`.
 
 ### Continuidade dos personagens e da narrativa
 
