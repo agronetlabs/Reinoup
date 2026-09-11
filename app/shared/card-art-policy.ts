@@ -15,12 +15,5 @@ export type ApprovedStory3DArtId = typeof APPROVED_STORY_3D_ART_IDS[number];
 
 export function isApprovedStory3DArtId(artId: string | undefined): artId is ApprovedStory3DArtId {
   return typeof artId === 'string'
-    && APPROVED_STORY_3D_ART_IDS.includes(artId as ApprovedStory3DArtId);
-}
-
-export function isApproved3DImageSource(source: string | undefined): boolean {
-  return typeof source === 'string'
-    && source.startsWith('/')
-    && source.includes('/story-art/')
-    && source.endsWith('.webp');
+    && APPROVED_STORY_3D_ART_IDS.some(id => id === artId);
 }

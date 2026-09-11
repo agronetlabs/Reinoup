@@ -218,20 +218,34 @@ de leitura, sem exceção: inclui Criação, Caim e Abel, histórias bloqueadas,
 quiz, escolha, jogos, desafios e recompensas. Os desenhos planos ainda exibidos
 são pendências de migração, não versões finais aprovadas; aplicar sombras ou
 converter o arquivo não substitui produzir a ilustração 3D.
-O app agora falha fechado para arte plana: superfícies de card, capa, leitura e
-seletores de jogos aceitam somente raster WebP 3D aprovado; quando a arte ainda
-não existe, mostram "Arte 3D em produção" em vez de promover SVG/motivo a
-versão final. O primeiro lote autorizado para **amostras** contém apenas as quatro
+Rasters novos exigem aprovação por registro, não somente extensão WebP.
+Enquanto faltam as substituições, as figuras legíveis existentes continuam como
+fallback transitório: o quiz e a memória não podem exibir todas as alternativas
+com o mesmo aviso, nem o quebra-cabeça perder a cena de referência.
+As áreas de arte usam `data-art-status` para distinguir `approved-3d` de
+`legacy-fallback`, sem declarar concluída a migração visual.
+O primeiro lote autorizado para **amostras** contém apenas as quatro
 alternativas de `gn-02-q2`: árvore com fruto, pão, água de rio e alimento animal.
 O mascote oficial de boné, a capa, as cenas existentes e os SVGs de fallback
-permanecem preservados. Não há novas imagens prontas nesta implementação.
+permanecem preservados. As quatro amostras da primeira rodada foram geradas
+em área privada, mas ainda não estão aprovadas nem integradas ao app.
+
+O afinamento DisneyClub3D aproveita somente o estilo do documento externo:
+formas arredondadas, materiais macios/foscos, luz difusa e fundos simples,
+com menos textura fotográfica. Não modifica as aulas, textos, perguntas,
+roadmap ou mascote. `scripts/lib/story-art-style.mjs` compartilha a direção
+entre os três geradores de arte; dry-runs e novos registros de geração
+identificam a revisão `disneyclub3d-stylized-v2`. Os arquivos e recibos da
+primeira rodada permanecem intactos, sem receber retroativamente essa revisão.
+WebP e filtragem de URL não certificam estilo: o aceite exige olhar as imagens
+em tamanho de card, conferir legibilidade e comparar o conjunto.
 
 `shared/quiz-card-art.ts` registra os quatro temas e as aprovações visuais
 separadamente. `getApprovedQuizCardArt` só fornece uma imagem ao card após uma
 aprovação explícita com referência; sem isso, mantém a apresentação existente
 sem solicitar URLs de arquivos ainda inexistentes. `ChoiceCard` aceita imagem
 grande acima do texto; se um arquivo aprovado falhar, informa a indisponibilidade
-e mantém texto/ícone, sem bloquear a resposta da criança.
+e mantém texto e figura de fallback, sem bloquear a resposta da criança.
 
 O gerador usa o **mesmo provedor e modelo do piloto** (`gpt-image-2.5-sunburst`),
 com a capa WebP versionada como referência de acabamento. Não exige os originais
@@ -251,6 +265,8 @@ Git. Nunca publica em `public` nem aprova uma imagem automaticamente.
 Não repete pedidos registrados, inclusive após interrupção, pois já podem ter
 sido cobrados. Inspecionar o pedido no provedor antes de decidir qualquer repetição.
 Não há troca automática de modelo em caso de indisponibilidade.
+Uma mudança de prompt também não libera repetição: não remover os registros
+da primeira rodada para forçar outra cobrança.
 
 Depois da aprovação visual humana, copiar somente os WebPs aceitos para
 `public/story-art/genesis/gn-02/quiz/` e registrar seus IDs/referências em

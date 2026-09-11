@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { APPROVED_QUIZ_CARD_ART, GN02_QUIZ_CARD_ART, getApprovedQuizCardArt } from '../shared/quiz-card-art';
 import { quizCardPrompt, selectQuizCardArt } from '../scripts/generate-gn02-quiz-art.mjs';
+import { STORY_ART_STYLE_PROMPT, STORY_ART_REFERENCE_PROMPT, STORY_ART_STYLE_REVISION } from '../scripts/lib/story-art-style.mjs';
 
 describe('first four 3D quiz cards', () => {
   test('the authorized sample batch covers each q2 answer exactly once', () => {
@@ -35,7 +38,25 @@ describe('first four 3D quiz cards', () => {
       expect(prompt).toContain(art.subject);
       expect(prompt).toContain('without hinting which answer is correct');
       expect(prompt).toContain('No people, mascot, logos');
+      expect(prompt).toContain(STORY_ART_STYLE_PROMPT);
+      expect(prompt).toContain(STORY_ART_REFERENCE_PROMPT);
+      expect(prompt).toContain('same camera distance');
     }
+  });
+
+  test('the refined quiz dry-run still contains exactly the four original answer slots', () => {
+    const result = spawnSync(process.execPath, [
+      fileURLToPath(new URL('../scripts/generate-gn02-quiz-art.mjs', import.meta.url)),
+      '--dry-run',
+    ], { encoding: 'utf8' });
+    expect(result.status).toBe(0);
+    const report = JSON.parse(result.stdout);
+    expect(report.styleRevision).toBe(STORY_ART_STYLE_REVISION);
+    expect(report.mode).toBe('dry-run');
+    expect(report.model).toBe('gpt-image-2.5-sunburst');
+    expect(report.count).toBe(4);
+    expect(report.paidRequests).toBe(0);
+    expect(report.assets.map((asset: { id: string }) => asset.id)).toEqual(GN02_QUIZ_CARD_ART.map(art => art.id));
   });
 
   test('only a reviewed asset resolves to its exact answer and public path', async () => {
@@ -60,21 +81,31 @@ describe('first four 3D quiz cards', () => {
       .toBe('/reinoup/story-art/genesis/gn-02/quiz/gn-02-q2-pao.webp');
     expect(registry.getApprovedQuizCardArt('gn-02-adao-eva', 'gn-02-q1', 1)).toBeUndefined();
     expect(registry.getApprovedQuizCardArt('gn-02-adao-eva', 'gn-02-q2', 4)).toBeUndefined();
+    const approved = registry.getApprovedQuizCardArt('gn-02-adao-eva', 'gn-02-q2', 1)!;
+    expect(registry.isApprovedQuizCardImage(approved)).toBe(true);
+    expect(registry.isApprovedQuizCardImage({ ...approved, alt: 'Outro alimento' })).toBe(false);
+    expect(registry.isApprovedQuizCardImage({ ...approved, src: '/story-art/unreviewed.webp' })).toBe(false);
+    const subpath = registry.getApprovedQuizCardArt('gn-02-adao-eva', 'gn-02-q2', 1, '/reinoup')!;
+    expect(registry.isApprovedQuizCardImage(subpath, '/reinoup')).toBe(true);
+    expect(registry.isApprovedQuizCardImage(subpath)).toBe(false);
   });
 
-  test('an approved image card keeps its label and non-3D art is never rendered as a fallback', async () => {
+  test('unreviewed rasters do not load and answers retain distinct figures during migration', async () => {
     const { renderToStaticMarkup } = await import('react-dom/server');
     const { ChoiceCard } = await import('../src/components/ui/ChoiceCard');
     const illustrated = renderToStaticMarkup(
       <ChoiceCard icon="grain" image={{ src: '/story-art/genesis/gn-02/quiz/approved-test-art.webp', alt: 'Pães em uma cesta' }}>Todo o pão</ChoiceCard>,
     );
-    expect(illustrated).toContain('src="/story-art/genesis/gn-02/quiz/approved-test-art.webp"');
+    expect(illustrated).not.toContain('<img');
     expect(illustrated).toContain('Todo o pão');
-    expect(illustrated).toContain('alt="Pães em uma cesta"');
-    expect(illustrated).not.toContain('<svg');
+    expect(illustrated).toContain('Ilustração indisponível');
+    expect(illustrated).toContain('<svg');
+    expect(illustrated).toContain('data-art-status="legacy-fallback"');
     const fallback = renderToStaticMarkup(<ChoiceCard icon="grain">Todo o pão</ChoiceCard>);
-    expect(fallback).toContain('Arte 3D em produção');
+    expect(fallback).not.toContain('Arte 3D em produção');
     expect(fallback).not.toContain('<img');
-    expect(fallback).not.toContain('<svg');
+    expect(fallback).toContain('<svg');
+    const tree = renderToStaticMarkup(<ChoiceCard icon="fruit-tree">O fruto de uma árvore</ChoiceCard>);
+    expect(tree).not.toBe(fallback);
   });
 });

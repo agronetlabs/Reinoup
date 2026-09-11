@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { GENESIS_3D_CATALOG } from '../shared/story-3d-catalog.ts';
+import { STORY_ART_STYLE_PROMPT, STORY_ART_REFERENCE_PROMPT, STORY_ART_STYLE_REVISION } from './lib/story-art-style.mjs';
 
 const app = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outputBaseDir = resolve(app, '..', '.local', 'story-3d-art');
@@ -12,16 +13,17 @@ const model = 'gpt-image-2.5-sunburst';
 
 export function buildStory3DPrompt(spec) {
   const guardrailsText = spec.theologicalGuardrails.map(g => `- ${g}`).join('\n');
-  return `Create ONE cinematic 3D storybook illustration for children aged 5 to 10 in the official ReinoUp "Disney Club 3D" style.
-Use the supplied reference image for visual quality, lighting warmth, tactile natural textures, rich character appeal, and pastoral biblical setting.
-Title: ${spec.title}
+  return `Create ONE original stylized 3D storybook illustration for children aged 5 to 10.
+${STORY_ART_STYLE_PROMPT}
+${STORY_ART_REFERENCE_PROMPT}
+Lesson title for context only, never lettering in the image: ${spec.title}
 Scene description: ${spec.subject}
 
 Editorial & Theological Guardrails:
 ${guardrailsText}
 - Composition must fit 3:2 landscape ratio (1200x800).
 - Keep primary action in the central 80% to avoid interface occlusion.
-- Warm, hopeful, engaging lighting with volumetric rays.
+- Keep the emotion faithful to the chapter; gentle lighting must not erase consequences or sorrow.
 - NO logos, words, text, modern elements, cartoon mascots, or flat vector clip art.`;
 }
 
@@ -63,6 +65,7 @@ export async function runStory3DArtGeneration(args = process.argv.slice(2)) {
     console.log(JSON.stringify({
       mode: 'dry-run',
       model,
+      styleRevision: STORY_ART_STYLE_REVISION,
       count: assets.length,
       paidRequests: 0,
       destination: '.local/story-3d-art/ (amostras privadas fora do Git)',
@@ -103,6 +106,7 @@ export async function runStory3DArtGeneration(args = process.argv.slice(2)) {
       id: asset.id,
       storyId: asset.storyId,
       model,
+      styleRevision: STORY_ART_STYLE_REVISION,
       prompt,
       referenceHash,
       dimensions: asset.dimensions,

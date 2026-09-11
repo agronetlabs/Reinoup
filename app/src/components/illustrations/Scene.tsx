@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { SceneConfig } from '../../content/types';
 import { isApprovedStory3DArtId } from '../../../shared/card-art-policy';
-import { getStoryArt } from '../../lib/story-art';
-import { ThreeDArtPlaceholder } from './ThreeDArtPlaceholder';
+import { getStoryArt, resolveStoryArtSource } from '../../lib/story-art';
+import { MotifIcon } from './MotifIcon';
 
 interface SceneProps {
   scene: SceneConfig;
@@ -14,26 +14,36 @@ interface SceneProps {
   artId?: string;
 }
 
-export function Scene({ className = '', height = 200, width, artId }: SceneProps) {
-  const [failed, setFailed] = useState(false);
+export function Scene({ scene, className = '', height = 200, width, artId }: SceneProps) {
+  const [failedSources, setFailedSources] = useState<string[]>([]);
   const reduceMotion = useReducedMotion();
   const art = getStoryArt(artId);
-  const hasApproved3DArt = isApprovedStory3DArtId(artId) && art?.src.endsWith('.webp');
-  const source = art && hasApproved3DArt && !failed ? art.src : undefined;
+  const candidate = art && resolveStoryArtSource(art, failedSources);
+  const hasApproved3DArt = isApprovedStory3DArtId(artId) && candidate === art?.src && candidate?.endsWith('.webp');
+  const source = hasApproved3DArt || candidate?.endsWith('.svg') ? candidate : undefined;
 
-  if (!art || !hasApproved3DArt || !source) {
+  if (!art || !source) {
     return (
-      <ThreeDArtPlaceholder
-        label={art?.alt ?? 'Ilustração da história'}
-        className={`rounded-[var(--radius-card)] ${className}`}
+      <div
+        role="img"
+        aria-label={art?.alt ?? 'Ilustração simplificada da história'}
+        data-art-status="legacy-fallback"
+        className={`flex items-center justify-around overflow-hidden rounded-[var(--radius-card)] bg-sand ${className}`}
         style={{ height, width: width ?? '100%' }}
-      />
+      >
+        {scene.motifs.slice(0, 3).map((motif, index) => (
+          <span key={`${motif}-${index}`} aria-hidden>
+            <MotifIcon motif={motif} size={Math.round(height * 0.4)} />
+          </span>
+        ))}
+      </div>
     );
   }
 
   const entranceX = art.guide === 'left' ? 10 : art.guide === 'right' ? -10 : 0;
   return (
     <div
+      data-art-status={hasApproved3DArt ? 'approved-3d' : 'legacy-fallback'}
       className={`relative isolate overflow-hidden rounded-[var(--radius-card)] border border-white/70 bg-cream-dark shadow-[0_10px_24px_rgba(20,33,61,0.14)] ${className}`}
       style={{ height, width: width ?? '100%' }}
     >
@@ -41,7 +51,10 @@ export function Scene({ className = '', height = 200, width, artId }: SceneProps
         key={source}
         src={source}
         alt={art.alt}
-        onError={() => setFailed(true)}
+        onError={() => {
+          console.warn(`Ilustração indisponível na história: ${source}`);
+          setFailedSources(previous => previous.includes(source) ? previous : [...previous, source]);
+        }}
         className="h-full w-full object-cover"
         style={{ objectPosition: art.focalPoint, transformOrigin: art.focalPoint }}
         initial={reduceMotion ? false : { scale: 1.045, x: entranceX, filter: 'saturate(.82) brightness(.94)' }}

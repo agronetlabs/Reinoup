@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { GN02_QUIZ_CARD_ART } from '../shared/quiz-card-art.ts';
+import { STORY_ART_STYLE_PROMPT, STORY_ART_REFERENCE_PROMPT, STORY_ART_STYLE_REVISION } from './lib/story-art-style.mjs';
 
 const app = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outputDir = resolve(app, '..', '.local', 'gn02-quiz-art');
@@ -11,10 +12,12 @@ const referencePath = join(app, 'public', 'story-art', 'genesis', 'gn-02', 'cove
 const model = 'gpt-image-2.5-sunburst';
 
 export function quizCardPrompt(art) {
-  return `Create ONE original cinematic 3D storybook quiz-card illustration for children aged 5 to 10.
-Use the supplied ReinoUp cover as a reference for rendering quality, tactile natural materials, warm light and the lush garden setting only. Do not copy its composition or include its people.
+  return `Create ONE original stylized 3D storybook quiz-card illustration for children aged 5 to 10.
+${STORY_ART_STYLE_PROMPT}
+${STORY_ART_REFERENCE_PROMPT}
 Subject: ${art.subject}
 The illustration must communicate this one answer literally and immediately at small mobile-card size. Compose the subject centrally with a quiet, softly receding natural background. Keep the full subject inside the central 80 percent for a 4:3 card crop.
+Use the same camera distance, soft lighting, background simplicity and visual weight for all four options. Keep the answer object large; do not add faces to objects or decorative objects that compete with the answer.
 This is a quiz answer illustration, not an additional biblical event. Keep the same visual richness, warmth and prominence for all alternatives, without hinting which answer is correct. No people, mascot, logos, words, lettering, numbers, interface, badges or check marks. No flat vector clip art.`;
 }
 
@@ -41,7 +44,7 @@ export async function generateQuizCardArt(args = process.argv.slice(2)) {
   const { assets, generate } = selectQuizCardArt(args);
   if (!generate) {
     console.log(JSON.stringify({
-      mode: 'dry-run', model, count: assets.length, paidRequests: 0,
+      mode: 'dry-run', model, styleRevision: STORY_ART_STYLE_REVISION, count: assets.length, paidRequests: 0,
       destination: '.local/gn02-quiz-art (amostras privadas, sem publicação)',
       assets: assets.map(art => ({ id: art.id, alt: art.alt, prompt: quizCardPrompt(art) })),
     }, null, 2));
@@ -64,7 +67,7 @@ export async function generateQuizCardArt(args = process.argv.slice(2)) {
   for (const art of assets) {
     const stem = join(outputDir, art.id);
     const prompt = quizCardPrompt(art);
-    const request = { id: art.id, model, prompt, referenceHash, startedAt: new Date().toISOString() };
+    const request = { id: art.id, model, styleRevision: STORY_ART_STYLE_REVISION, prompt, referenceHash, startedAt: new Date().toISOString() };
     // Um pedido interrompido pode ter sido cobrado; nunca tentar novamente automaticamente.
     await writeFile(`${stem}.request.json`, JSON.stringify(request, null, 2), { flag: 'wx' });
     const form = new FormData();

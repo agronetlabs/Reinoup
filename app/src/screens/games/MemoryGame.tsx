@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
-import { ThreeDArtPlaceholder } from '../../components/illustrations/ThreeDArtPlaceholder';
+import { MotifIcon } from '../../components/illustrations/MotifIcon';
 import { SpeechBubble } from '../../components/mascot/SpeechBubble';
 import { UnlockedStoryPicker } from '../../components/games/UnlockedStoryPicker';
 import { getStory } from '../../content/stories';
@@ -99,10 +99,11 @@ export function MemoryGame() {
                       ?
                     </div>
                     <div
+                      data-art-status="legacy-fallback"
                       className="absolute inset-0 flex items-center justify-center rounded-xl bg-white p-1 [backface-visibility:hidden]"
                       style={{ transform: 'rotateY(180deg)' }}
                     >
-                      <ThreeDArtPlaceholder label={card.label} compact className="rounded-xl" />
+                      <MotifIcon motif={card.motif} size={36} />
                     </div>
                   </motion.div>
                 </button>

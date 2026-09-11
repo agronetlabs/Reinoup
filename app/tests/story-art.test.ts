@@ -31,4 +31,7 @@ describe('cinematic story artwork', () => {
     expect(resolveStoryArtSource(art, [art.src])).toBeUndefined();
     expect(art.src.endsWith('.svg')).toBe(true);
   });
+  test('the pilot cover keeps faces within the shallow story-card crop', () => {
+    expect(getStoryArt(gn02AdaoEva.id)!.focalPoint).toBe('50% 0%');
+  });
 });

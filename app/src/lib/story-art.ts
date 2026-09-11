@@ -63,7 +63,7 @@ const STORY_ART: Record<string, StoryArtAsset> = {
   // ============================================================
   'gn-02-adao-eva': {
     alt: 'Adão e Eva no jardim diante da escolha, com a árvore e a serpente ao fundo',
-    focalPoint: '50% 50%',
+    focalPoint: '50% 0%',
     guide: 'right',
     src: `${genesis}/gn-02/cover.webp`,
     fallbackSrc: `${genesis}/gn-02/cover.svg`,

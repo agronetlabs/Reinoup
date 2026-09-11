@@ -112,6 +112,22 @@ Direção aprovada: ilustração original de animação familiar 3D, com express
 legíveis, materiais táteis e iluminação que ajuda a contar a história. Referências
 de estúdio indicam acabamento, não autorizam copiar personagens nem redefinir a marca.
 O piloto raster é `gn-02`; não considerar o catálogo inteiro convertido.
+**Afinamento visual confirmado em 2026-09-11:** do documento de direção
+externo, aproveitar somente a linguagem visual DisneyClub3D. As aulas,
+lições, capítulos, perguntas, faixas etárias e acontecimentos continuam sendo
+os do app; o documento não altera o roadmap nem a identidade do mascote.
+O objetivo é animação familiar 3D **estilizada**, não fotografia: volumes
+arredondados, silhuetas legíveis, materiais macios/foscos, luz quente difusa,
+poucos detalhes de superfície e fundo simples. Manter a emoção escrita no
+capítulo, inclusive preocupação ou tristeza; suavizar o desenho não apaga
+consequências nem transforma todas as cenas em momentos felizes.
+O acabamento deve ser reconhecível em card pequeno, com um foco dominante.
+Textura fotográfica, microdetalhes de casca/pedra/pão, reflexos excessivos e
+fundos carregados não atendem ao afinamento. O formato WebP, o nome do modelo
+ou um aviso de produção não comprovam conformidade visual.
+`app/scripts/lib/story-art-style.mjs` concentra essa direção para os geradores;
+a revisão `disneyclub3d-stylized-v2` é registrada em dry-runs e novas gerações,
+sem reclassificar ou substituir imagens já produzidas.
 A direção confirmada em 2026-09-11 é levar o mesmo acabamento 3D original
 aos cards de todas as telas, começando pela jornada completa de Adão e Eva.
 **Regra global, sem exceção de história ou tela:** toda imagem de card, capa
@@ -119,10 +135,12 @@ e cena de leitura deve seguir esse acabamento, chamado pelo responsável de
 "Disney Club 3D". Inclui Criação, Caim e Abel, histórias bloqueadas, alternativas
 de quiz/escolha e figuras de jogos, desafios e recompensas. O conteúdo visual
 continua original e o mascote oficial não é redesenhado.
-Os SVGs existentes permanecem no catálogo histórico, mas não são renderizados
-em áreas de card ou cena que exigem a direção 3D. Enquanto cada nova arte é
-produzida e aprovada, a interface mostra um estado explícito de arte em
-produção; SVG é uma pendência de migração, nunca uma exceção aprovada ao padrão.
+Enquanto a substituição 3D não estiver produzida e aprovada, preservar as
+figuras distintas existentes como fallback transitório. Substituir todas por
+avisos idênticos prejudica a leitura do quiz, a memória e o quebra-cabeça.
+`data-art-status="legacy-fallback"` identifica essa pendência na inspeção
+técnica, sem apresentá-la como arte 3D aprovada. Não considerar o fallback
+uma exceção ao objetivo visual final.
 Sombras, gradientes ou converter SVG para WebP não tornam uma arte plana uma
 ilustração 3D. Não considerar uma tela visualmente concluída enquanto suas
 imagens principais dependerem desses desenhos provisórios.
@@ -136,19 +154,22 @@ produção e publicação continuam sujeitas às autorizações específicas aba
 | Cena de capítulo | WebP quando aprovado; SVG/motivos como fallback | Uma ação e uma emoção legíveis por cena |
 | Mascote | arte oficial de boné, separada da cena | Não sobrepor às imagens durante a leitura; reservar para orientação e feedback. Não redesenhar nem gerar junto com os personagens bíblicos |
 
-`MotifIcon` permanece como catálogo histórico de motivos para autoria e migração,
-mas não é uma arte final e não pode ser renderizado em cards, capas, cenas,
-memória, adesivos ou quiz. Cada motivo que ocupar uma área de imagem precisa
-ganhar uma arte 3D WebP aprovada no inventário correspondente.
+`MotifIcon` preserva figuras reconhecíveis durante a migração, inclusive em
+memória, adesivos e quiz; não é a arte final. Cada motivo que ocupar uma área
+de imagem precisa ganhar uma arte 3D aprovada no inventário correspondente.
 
 O primeiro lote de amostras dos cards do piloto tem quatro imagens para
 `gn-02-q2`: árvore com fruto, pão assado, água de rio e alimento dos animais.
+As quatro amostras da primeira rodada foram produzidas em área privada;
+permanecem sem aceite visual e sem integração. Afinar os prompts não regenera
+esse lote nem autoriza ampliar a produção.
 Não representar pão só por trigo nem alimento só pela figura do animal.
 Todas as alternativas devem ter o mesmo acabamento e destaque, sem pistas
 visuais de qual é a correta. Manter texto, controles e selo de acerto fora da arte.
 Produzir amostras não autoriza publicá-las: `app/shared/quiz-card-art.ts`
 separa o inventário do lote da lista de artes aprovadas, ainda vazia. O
-componente de card rejeita fontes que não sejam WebP 3D dentro de `story-art`.
+componente de card confere a imagem e seu texto alternativo contra esse
+registro. Estar em `story-art` ou terminar em WebP não equivale a aprovação.
 
 ### Continuidade dos personagens e da narrativa
 
