@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
@@ -37,11 +37,13 @@ export function MemoryGame() {
   const [flipped, setFlipped] = useState<number[]>([]);
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [won, setWon] = useState(false);
+  const rewarded = useRef(false);
 
   useEffect(() => {
     if (flipped.length !== 2) return;
     const [a, b] = flipped;
-    const isMatch = deck[a]?.pairId === deck[b]?.pairId;
+    if (!deck[a] || !deck[b]) return;
+    const isMatch = deck[a].pairId === deck[b].pairId;
     const id = setTimeout(() => {
       if (isMatch) setMatched((prev) => new Set(prev).add(deck[a].pairId));
       setFlipped([]);
@@ -50,15 +52,16 @@ export function MemoryGame() {
   }, [flipped, deck]);
 
   useEffect(() => {
-    if (story && matched.size > 0 && matched.size === story.memoryPairs.length && !won) {
+    if (story && matched.size > 0 && matched.size === story.memoryPairs.length && !rewarded.current) {
+      rewarded.current = true;
       setWon(true);
       recordGameWin(`Memória Bíblica — ${story.title}`);
     }
   }, [matched, story, won, recordGameWin]);
 
   function handleFlip(i: number) {
-    if (flipped.length === 2 || flipped.includes(i) || matched.has(deck[i].pairId)) return;
-    setFlipped((prev) => [...prev, i]);
+    if (won || !deck[i] || matched.has(deck[i].pairId)) return;
+    setFlipped((prev) => prev.length >= 2 || prev.includes(i) ? prev : [...prev, i]);
   }
 
   function reset() {
@@ -66,11 +69,12 @@ export function MemoryGame() {
     setFlipped([]);
     setMatched(new Set());
     setWon(false);
+    rewarded.current = false;
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-cream pb-8">
-      <TopBar title="Memória Bíblica" backTo={story ? undefined : '/app/jogos'} onBack={story ? () => setStoryId(null) : undefined} />
+      <TopBar title="Memória Bíblica" backTo={story ? undefined : '/app/jogos'} onBack={story ? reset : undefined} />
       {!story ? (
         <UnlockedStoryPicker onPick={setStoryId} />
       ) : (

@@ -1,25 +1,13 @@
-import type { Plan } from './types';
+import { MAX_CHILD_PROFILES, PAID_PLAN_ID, PRICE_CENTS } from '../../shared/billing';
 
-export const PLANS: Plan[] = [
-  {
-    id: 'essencial',
-    name: 'Essencial',
-    monthlyPrice: 10.9,
-    features: ['Histórias', 'Versículo do dia', 'Quiz', 'Desafios diários'],
-  },
-  {
-    id: 'completo',
-    name: 'Completo',
-    monthlyPrice: 19.9,
-    highlight: true,
-    features: ['Tudo do Essencial', 'Jogos ilimitados', 'Missões exclusivas', 'Relatórios dos pais', 'Avatares exclusivos'],
-  },
-  {
-    id: 'familia',
-    name: 'Família',
-    monthlyPrice: 29.9,
-    features: ['Tudo do Completo', 'Até 4 crianças', 'Suporte prioritário'],
-  },
-];
-
-export const ANNUAL_DISCOUNT = 0.2;
+export const PLANS = [{
+  id: PAID_PLAN_ID,
+  name: 'ReinoUp',
+  prices: PRICE_CENTS,
+  features: [
+    'Todos os recursos atuais incluídos',
+    'Histórias, versículo do dia, quiz e desafios diários',
+    'Jogos, missões, relatórios dos pais e avatares',
+    `Até ${MAX_CHILD_PROFILES} perfis infantis por conta do responsável`,
+  ],
+}] as const;

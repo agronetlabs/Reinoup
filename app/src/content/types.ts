@@ -249,10 +249,9 @@ export interface Mission {
 export interface Plan {
   id: 'essencial' | 'completo' | 'familia';
   name: string;
-  monthlyPrice: number;
+  prices: { mensal: number; anual: number };
   features: string[];
   highlight?: boolean;
 }
-
 
 

@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
-import { Mascot } from '../../components/mascot/Mascot';
+import { MascotOficial } from '../../components/mascot/MascotOficial';
 import { useAuthStore } from '../../store/authStore';
 import { useProgressStore } from '../../store/progressStore';
 import { getLevelProgress } from '../../content/levels';
@@ -23,8 +23,6 @@ export function Profile() {
   const stories = useProgressStore((s) => s.stories);
 
   const level = getLevelProgress(xp);
-  const outfitItem = getAvatarItem(avatar.outfit);
-  const accessoryItem = getAvatarItem(avatar.accessory ?? '');
   const backgroundItem = getAvatarItem(avatar.background);
   const storiesCompleted = STORIES.filter((s) => stories[s.id]?.completed).length;
 
@@ -38,7 +36,9 @@ export function Profile() {
       <h1 className="font-display text-center text-xl font-extrabold text-navy">Meu Perfil</h1>
 
       <Link to="/app/avatar" className="flex items-center gap-4">
-        <Mascot size={80} outfitColor={outfitItem?.value} accessory={accessoryItem?.value} background={backgroundItem?.value} animated={false} />
+        <div className="shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: backgroundItem?.value }}>
+          <MascotOficial size={80} recorte="busto" />
+        </div>
         <div className="flex-1">
           <p className="font-display text-xl font-bold text-navy">{childProfile?.name}</p>
           <p className="text-sm font-semibold text-navy/60">Nível {level.level}</p>

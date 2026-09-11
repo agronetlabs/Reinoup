@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
@@ -9,60 +9,52 @@ import { SpeechBubble } from '../../components/mascot/SpeechBubble';
 import { getStory } from '../../content/stories';
 import { useProgressStore } from '../../store/progressStore';
 import { sfx } from '../../lib/sfx';
+import type { Story } from '../../content/types';
+import { createQuizSession, quizSessionReducer } from '../../lib/quiz-session';
 
 export function Quiz() {
   const { storyId } = useParams<{ storyId: string }>();
+  const progress = useProgressStore((s) => storyId ? s.stories[storyId] : undefined);
+  const story = storyId ? getStory(storyId) : undefined;
+  if (!story) return <Navigate to="/app/historias" replace />;
+  if (!progress?.completed) return <Navigate to={`/app/historia/${story.id}`} replace />;
+  return <QuizRound key={story.id} story={story} />;
+}
+
+function QuizRound({ story }: { story: Story }) {
   const navigate = useNavigate();
   const submitQuiz = useProgressStore((s) => s.submitQuiz);
+  const total = story.quiz.length;
+  const [{ queue, pointer, firstAttempt, selected, revealed, finished }, dispatch] = useReducer(quizSessionReducer, total, createQuizSession);
+  const submitted = useRef(false);
 
-  const story = storyId ? getStory(storyId) : undefined;
-  const total = story?.quiz.length ?? 0;
-
-  const [queue, setQueue] = useState<number[]>(() => (story ? story.quiz.map((_, i) => i) : []));
-  const [pointer, setPointer] = useState(0);
-  const [firstAttempt, setFirstAttempt] = useState<Record<number, boolean>>({});
-  const [requeued, setRequeued] = useState<Set<number>>(new Set());
-  const [selected, setSelected] = useState<number | null>(null);
-  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    if (!finished || submitted.current) return;
+    submitted.current = true;
+    const score = Object.values(firstAttempt).filter(Boolean).length;
+    submitQuiz(story.id, score, total);
+    navigate(`/app/historia/${story.id}/resultado`, { replace: true, state: { score, total } });
+  }, [finished, firstAttempt, navigate, story.id, submitQuiz, total]);
 
   const currentQIndex = queue[pointer];
-  const question = story?.quiz[currentQIndex];
+  const question = story.quiz[currentQIndex];
 
   const displayNumber = Math.min(pointer + 1, total);
 
-  if (!story) return <Navigate to="/app/historias" replace />;
-
   function selectOption(optIndex: number) {
     if (revealed || !question) return;
-    setSelected(optIndex);
-    setRevealed(true);
     const isCorrect = optIndex === question.correctIndex;
+    dispatch({ type: 'answer', selected: optIndex, correct: isCorrect });
 
     if (isCorrect) {
       sfx.success();
     } else {
       sfx.retry();
     }
-
-    setFirstAttempt((prev) => (currentQIndex in prev ? prev : { ...prev, [currentQIndex]: isCorrect }));
-
-    if (!isCorrect && !requeued.has(currentQIndex)) {
-      setRequeued((prev) => new Set(prev).add(currentQIndex));
-      setQueue((prev) => [...prev, currentQIndex]);
-    }
   }
 
   function handleNext() {
-    if (!story) return;
-    if (pointer + 1 < queue.length) {
-      setPointer((p) => p + 1);
-      setSelected(null);
-      setRevealed(false);
-    } else {
-      const score = Object.values(firstAttempt).filter(Boolean).length;
-      submitQuiz(story.id, score, total);
-      navigate(`/app/historia/${story.id}/resultado`, { replace: true, state: { score, total } });
-    }
+    dispatch({ type: 'next' });
   }
 
   if (!question) return null;
@@ -104,7 +96,7 @@ export function Quiz() {
       </div>
 
       <div className="px-4 pt-4">
-        <Button full size="lg" disabled={!revealed} onClick={handleNext}>
+        <Button full size="lg" disabled={!revealed || finished} onClick={handleNext}>
           {pointer + 1 < queue.length ? 'Próxima' : 'Ver resultado'}
         </Button>
       </div>

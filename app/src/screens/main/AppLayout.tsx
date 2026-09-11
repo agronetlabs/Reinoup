@@ -23,7 +23,11 @@ export function AppLayout() {
   const lock = useAppLock();
   const location = useLocation();
 
-  useActivityTimer();
+  useActivityTimer(isAuthenticated && Boolean(childProfile) && !lock.locked);
+
+  useEffect(() => {
+    closeChat();
+  }, [location.pathname, lock.locked, closeChat]);
 
   useEffect(() => {
     ensureFreshDaily();
@@ -46,7 +50,7 @@ export function AppLayout() {
       </div>
 
       {/* Botão flutuante para falar ao vivo com o Cordeirinho */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 mx-auto flex max-w-md justify-end px-4">
+      {!lock.locked && <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 mx-auto flex max-w-md justify-end px-4">
         <button
           onClick={openChat}
           className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-action-primary-bg shadow-[0_4px_16px_rgba(20,33,61,0.25)] ring-4 ring-white transition-[transform,box-shadow] duration-150 active:scale-95"
@@ -55,12 +59,11 @@ export function AppLayout() {
         >
           <span className="text-2xl" role="img" aria-label="Microfone">🎙️</span>
         </button>
-      </div>
+      </div>}
 
       <BottomNav />
       {lock.locked && lock.reason && <AppLockOverlay reason={lock.reason} />}
-      <MascotLiveChatModal open={isChatOpen} onClose={closeChat} />
+      <MascotLiveChatModal open={isChatOpen && !lock.locked} onClose={closeChat} />
     </div>
   );
 }
-

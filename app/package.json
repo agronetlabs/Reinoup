@@ -10,8 +10,13 @@
     "lint": "oxlint",
     "check:conteudo": "bun scripts/check-content.ts",
     "assets:stories": "bun scripts/build-story-assets.mjs",
+    "assets:brand": "bun scripts/build-brand-assets.mjs",
     "audio:stories": "bun scripts/generate-story-audio.mjs",
-    "check": "bun run lint && bun run check:conteudo && bun run build:fast",
+    "test:payments": "bun test tests/payments.test.ts",
+    "test:app": "bun test tests/story-audio.test.ts tests/gameplay.test.ts tests/gameplay-progress.test.ts tests/activity-report.test.ts tests/brand-assets.test.ts",
+    "test:stripe:sandbox": "bun scripts/test-stripe-sandbox.ts",
+    "check:payments": "tsc -p tsconfig.functions.json && bun run test:payments",
+    "check": "bun run lint && bun run check:conteudo && bun run check:payments && bun run test:app && bun run build:fast",
     "preview": "vite preview"
   },
   "dependencies": {

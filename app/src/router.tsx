@@ -81,7 +81,7 @@ export const router = createBrowserRouter([
       { path: 'perfil', element: <Profile /> },
       { path: 'avatar', element: <Avatar /> },
 
-      { path: 'planos', element: <Plans /> },
+      { path: 'planos', element: <ParentGuard />, children: [{ index: true, element: <Plans /> }] },
       { path: 'final', element: <FinalCelebration /> },
     ],
   },

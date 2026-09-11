@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
@@ -11,6 +11,7 @@ import { getStory, pagesForAge } from '../../content/stories';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useStoryAudio } from '../../hooks/useStoryAudio';
+import { useAppLock } from '../../hooks/useAppLock';
 import { getStoryAudioPath } from '../../lib/story-audio';
 
 export function ChapterReader() {
@@ -18,12 +19,15 @@ export function ChapterReader() {
   const navigate = useNavigate();
   const completeChapter = useProgressStore((s) => s.completeChapter);
   const recordChoice = useProgressStore((s) => s.recordChoice);
-  const { play, stop, isPlaying, isStudioAudio } = useStoryAudio();
+  const { locked } = useAppLock();
+  const { play, stop, isPlaying, isStudioAudio, error: audioError } = useStoryAudio(!locked);
   const ageBand = useSettingsStore((s) => s.ageBand);
 
   const story = storyId ? getStory(storyId) : undefined;
   const chapterIndex = Number(chapterIndexParam ?? 0);
   const chapter = story?.chapters[chapterIndex];
+
+  useEffect(() => stop(), [stop, chapter?.id, ageBand]);
 
   const [pageIndex, setPageIndex] = useState(0);
   const [choiceIndex, setChoiceIndex] = useState<number | null>(null);
@@ -123,12 +127,12 @@ export function ChapterReader() {
           </button>
         )}
         {!atChoiceStep && (
-          <p className="flex-1 text-sm font-semibold text-navy/50">
-            {isPlaying
+          <p role="status" className="flex-1 text-sm font-semibold text-navy">
+            {audioError ?? (isPlaying
               ? isStudioAudio
                 ? 'Ouvindo narração de estúdio...'
                 : 'Narrando...'
-              : 'Toque para ouvir'}
+              : 'Toque para ouvir')}
           </p>
         )}
         <Button
