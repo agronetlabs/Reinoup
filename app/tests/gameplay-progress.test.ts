@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { STORIES } from '../src/content/stories';
+import { getVerseOfDay } from '../src/content/verses';
 import { todayKey } from '../src/lib/dates';
 import { CHAPTER_COINS, CHAPTER_XP } from '../src/lib/economy';
 
@@ -75,6 +76,35 @@ describe('daily rewards', () => {
 });
 
 describe('gameplay inputs', () => {
+  test('collecting a verse completes today daily task even when it was collected before', () => {
+    const verseId = getVerseOfDay().id;
+    store.setState({
+      versesCollected: [verseId],
+      dailyChallenge: {
+        ...store.getState().dailyChallenge,
+        tasks: store.getState().dailyChallenge.tasks.map((task) =>
+          task.id === 'decorar-versiculo' ? { ...task, done: false, progress: 0 } : task
+        ),
+      },
+    });
+    const coins = store.getState().coins;
+    store.getState().collectVerse(verseId);
+    const dailyTask = store.getState().dailyChallenge.tasks.find((task) => task.id === 'decorar-versiculo');
+    expect(dailyTask?.done).toBe(true);
+    expect(dailyTask?.progress).toBe(1);
+    expect(store.getState().coins).toBe(coins);
+    expect(store.getState().versesCollected).toEqual([verseId]);
+  });
+
+  test('collecting an unknown verse does not alter progress or daily tasks', () => {
+    const before = store.getState();
+    store.getState().collectVerse('unknown-verse');
+    expect(store.getState().coins).toBe(before.coins);
+    expect(store.getState().xp).toBe(before.xp);
+    expect(store.getState().dailyChallenge).toEqual(before.dailyChallenge);
+    expect(store.getState().versesCollected).toEqual([]);
+  });
+
   test('chapter indices cannot skip unread content or forge completion', () => {
     const story = STORIES[0];
     for (const index of [-1, 0.5, NaN, story.chapters.length, 1]) {

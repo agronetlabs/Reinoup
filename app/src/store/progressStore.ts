@@ -274,11 +274,13 @@ export const useProgressStore = create<Store>()(
         },
 
         collectVerse: (verseId) => {
+          if (!getVerse(verseId)) return;
+          get().ensureFreshDaily();
+          bumpDailyTask('decorar-versiculo', 1);
           if (get().versesCollected.includes(verseId)) return;
           set((s) => ({ versesCollected: [...s.versesCollected, verseId] }));
           get().addCoins(VERSE_MEMORIZED_COINS);
           get().addXp(VERSE_MEMORIZED_XP);
-          bumpDailyTask('decorar-versiculo', 1);
           logActivity('versiculo', getVerse(verseId)?.reference ?? verseId);
           applyStreak();
           checkBadges();

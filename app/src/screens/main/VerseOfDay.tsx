@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
@@ -24,6 +24,8 @@ export function VerseOfDay() {
   const navigate = useNavigate();
   const ageBand = useSettingsStore((s) => s.ageBand);
   const versesCollected = useProgressStore((s) => s.versesCollected);
+  const dailyVerseDone = useProgressStore((s) => s.dailyChallenge.tasks.some((task) => task.id === 'decorar-versiculo' && task.done));
+  const ensureFreshDaily = useProgressStore((s) => s.ensureFreshDaily);
   const collectVerse = useProgressStore((s) => s.collectVerse);
   const { speak, stop, speaking } = useSpeech();
   const recorder = useRecorder();
@@ -36,7 +38,10 @@ export function VerseOfDay() {
 
   const alreadyCollected = versesCollected.includes(verse.id);
   const isCorrectOrder = placed.map((p) => p.w).join(' ') === targetWords.join(' ');
-  const done = alreadyCollected || isCorrectOrder;
+
+  useEffect(() => {
+    ensureFreshDaily();
+  }, [ensureFreshDaily]);
 
   function placeWord(item: { w: string; id: number }) {
     setPool((p) => p.filter((x) => x.id !== item.id));
@@ -69,9 +74,14 @@ export function VerseOfDay() {
           </button>
         </Card>
 
-        {!done ? (
+        {!dailyVerseDone ? (
           <Card>
             <p className="font-display mb-3 font-bold text-navy">Monte o versículo na ordem certa</p>
+            {alreadyCollected && (
+              <p className="mb-3 text-sm font-semibold text-navy">
+                Este versículo já está na sua estante. Vamos relembrá-lo para completar o desafio de hoje.
+              </p>
+            )}
             <div className="mb-4 flex min-h-14 flex-wrap gap-2 rounded-2xl border-2 border-dashed border-navy/15 p-3">
               {placed.map((item) => (
                 <motion.button
@@ -140,7 +150,7 @@ export function VerseOfDay() {
           )}
         </Card>
 
-        {done && (
+        {dailyVerseDone && (
           <div className="flex gap-3">
             <Button variant="secondary" full onClick={() => navigate('/app/estante-versiculos')}>
               Ver estante
