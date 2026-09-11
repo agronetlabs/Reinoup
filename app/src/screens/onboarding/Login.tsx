@@ -9,6 +9,7 @@ import { authRemotoDisponivel, entrarComoResponsavel } from '../../lib/auth-supa
 export function Login() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
+  const register = useAuthStore((s) => s.register);
   const mockSocialLogin = useAuthStore((s) => s.mockSocialLogin);
   const childProfile = useAuthStore((s) => s.childProfile);
   const setFamilyId = useAuthStore((s) => s.setFamilyId);
@@ -25,12 +26,13 @@ export function Login() {
     e.preventDefault();
     setError(null);
 
-    // Com Supabase configurado, a senha é conferida no servidor. Sem ele, o
-    // app segue no modo local — é o que mantém o protótipo utilizável.
     if (authRemotoDisponivel) {
       const remoto = await entrarComoResponsavel(email, password);
       if (!remoto.ok) return setError(remoto.error ?? 'Não foi possível entrar.');
       setFamilyId(remoto.familyId ?? null);
+      register(email, password);
+      afterAuth();
+      return;
     }
 
     const result = login(email, password);

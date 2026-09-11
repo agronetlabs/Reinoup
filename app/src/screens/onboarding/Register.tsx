@@ -4,7 +4,7 @@ import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { MascotOficial } from '../../components/mascot/MascotOficial';
 import { useAuthStore } from '../../store/authStore';
-import { authRemotoDisponivel, cadastrarResponsavel } from '../../lib/auth-supabase';
+import { authRemotoDisponivel, cadastrarResponsavel, entrarComoResponsavel } from '../../lib/auth-supabase';
 
 export function Register() {
   const navigate = useNavigate();
@@ -23,7 +23,6 @@ export function Register() {
     setError(null);
     setEnviando(true);
 
-    // Com Supabase configurado a conta é de verdade; sem ele, segue local.
     if (authRemotoDisponivel) {
       const remoto = await cadastrarResponsavel(email, password);
       if (!remoto.ok) {
@@ -32,13 +31,15 @@ export function Register() {
       }
       setFamilyId(remoto.familyId ?? null);
 
-      // Sem sessão, o RLS barra tudo: o pai entraria e não veria a própria
-      // assinatura. Melhor parar aqui e dizer o que falta.
       if (remoto.precisaConfirmarEmail) {
-        setEnviando(false);
-        return setError(
-          'Conta criada! Confirme o e-mail que enviamos para você e depois entre com sua senha.'
-        );
+        const login = await entrarComoResponsavel(email, password);
+        if (!login.ok) {
+          setEnviando(false);
+          return setError(
+            'Conta criada! Confirme o e-mail que enviamos para você e depois entre com sua senha.'
+          );
+        }
+        setFamilyId(login.familyId ?? null);
       }
     }
 
