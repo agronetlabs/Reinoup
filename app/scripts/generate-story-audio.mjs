@@ -3,83 +3,64 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { STORIES } from '../src/content/stories.ts';
+import { assertApprovedVoiceForRole } from '../shared/voice-policy.ts';
+import { audioAssetMatches, storyAudioContentHash } from '../shared/story-audio-manifest.ts';
+import { storyAudioInventory } from '../shared/story-audio-segments.ts';
+import { selectAudioSources, printAudioInventory } from './lib/story-audio-selection.mjs';
+import { MANIFEST_VERSION, WARM_NARRATION_SETTINGS, readManifest, retainedAudioEntries, requestNarration, writeManifestAtomic } from './lib/story-audio-generator.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const publicDir = path.resolve(__dirname, '../public/audio/stories');
-
-const apiKey = process.env.ELEVENLABS_API_KEY;
-const voiceId = process.env.ELEVENLABS_VOICE_ID || 'qLqIiyI3C8MLNhPB514E';
-
-console.log('🎙️ Gerador de Áudio de Histórias ReinoUp (ElevenLabs)');
-
-if (!apiKey) {
-  console.log('\n⚠️  ELEVENLABS_API_KEY não foi encontrada nas variáveis de ambiente.');
-  console.log('Para gerar narrações estáticas com voz humana:');
-  console.log('  1. Defina ELEVENLABS_API_KEY=sua_chave no arquivo .env');
-  console.log('  2. Opcional: ELEVENLABS_VOICE_ID=id_da_voz');
-  console.log('  3. Execute: bun scripts/generate-story-audio.mjs\n');
-  console.log('ℹ️  O app continuará usando o fallback de fala automática normalmente.');
-  process.exit(0);
-}
-
-const AGE_BANDS = ['5-7', '8-10'];
-
-let generated = 0;
-let skipped = 0;
-
-for (const story of STORIES) {
-  for (const ageBand of AGE_BANDS) {
-    const targetDir = path.join(publicDir, story.id, ageBand);
-    await mkdir(targetDir, { recursive: true });
-
-    for (const chapter of story.chapters) {
-      const pages = chapter.pages[ageBand] || [];
-      for (let pIdx = 0; pIdx < pages.length; pIdx++) {
-        const text = pages[pIdx];
-        const fileName = `${chapter.id}-p${pIdx + 1}.mp3`;
-        const filePath = path.join(targetDir, fileName);
-
-        if (existsSync(filePath)) {
-          skipped++;
-          continue;
-        }
-
-        console.log(`🔊 Gerando [${story.id}] ${chapter.id} pág ${pIdx + 1} (${ageBand})...`);
-
-        try {
-          const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-            method: 'POST',
-            headers: {
-              'xi-api-key': apiKey,
-              'Content-Type': 'application/json',
-              Accept: 'audio/mpeg',
-            },
-            body: JSON.stringify({
-              text,
-              model_id: 'eleven_multilingual_v2',
-              voice_settings: {
-                stability: 0.5,
-                similarity_boost: 0.8,
-                style: 0.2,
-                use_speaker_boost: true,
-              },
-            }),
-          });
-
-          if (!res.ok) {
-            console.error(`❌ Erro ElevenLabs (${res.status}): ${await res.text()}`);
-            continue;
-          }
-
-          const buffer = Buffer.from(await res.arrayBuffer());
-          await writeFile(filePath, buffer);
-          generated++;
-        } catch (err) {
-          console.error(`❌ Erro ao gerar ${fileName}:`, err);
-        }
+const { sources, dryRun, force } = selectAudioSources(STORIES, process.argv.slice(2), { generation: true });
+if (dryRun) {
+  printAudioInventory(sources);
+} else {
+  const voiceForRole = role => process.env[role === 'narration' ? 'ELEVENLABS_VOICE_ID' : `ELEVENLABS_${role.toUpperCase()}_VOICE_ID`];
+  // Validate the entire selection before the first paid request or local write.
+  for (const role of new Set(sources.map(source => source.role))) assertApprovedVoiceForRole(voiceForRole(role), role);
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) throw new Error('ELEVENLABS_API_KEY ausente. Use --dry-run sem consumir créditos.');
+  const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2';
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public/audio/stories');
+  const voiceSettings = {
+    stability: WARM_NARRATION_SETTINGS.stability, similarityBoost: WARM_NARRATION_SETTINGS.similarity_boost,
+    style: WARM_NARRATION_SETTINGS.style, speed: WARM_NARRATION_SETTINGS.speed,
+    useSpeakerBoost: WARM_NARRATION_SETTINGS.use_speaker_boost,
+  };
+  let generated = 0;
+  let skipped = 0;
+  for (const storyId of new Set(sources.map(source => source.storyId))) {
+    const storyDir = path.join(root, storyId);
+    const manifestPath = path.join(storyDir, 'manifest.json');
+    const previous = await readManifest(manifestPath);
+    const story = STORIES.find(candidate => candidate.id === storyId);
+    const allSources = ['5-7', '8-10'].flatMap(age => storyAudioInventory(story, age));
+    // Upgrade v1 metadata without regenerating approved, matching narrator files.
+    const manifest = { version: MANIFEST_VERSION, storyId, provider: 'elevenlabs', generatedAt: new Date().toISOString(), pages: [], segments: [] };
+    const current = retainedAudioEntries(previous, allSources, file => existsSync(path.join(storyDir, file)));
+    for (const source of sources.filter(item => item.storyId === storyId)) {
+      const file = `${source.ageBand}/${source.pageIndex !== undefined ? source.segmentId : `segments/${source.segmentId}`}.mp3`;
+      const voiceId = voiceForRole(source.role);
+      const old = current.find(asset => asset.file === file);
+      if (!force && old?.voiceId === voiceId && old.modelId === modelId && JSON.stringify(old.voiceSettings) === JSON.stringify(voiceSettings)) {
+        skipped++; continue;
       }
+      assertApprovedVoiceForRole(voiceId, source.role);
+      const narration = await requestNarration({ apiKey, voiceId, modelId, text: source.text });
+      const asset = {
+        storyId, ageBand: source.ageBand, role: source.role, voiceId, modelId, voiceSettings,
+        ...(source.pageIndex !== undefined ? { chapterId: source.chapterId, pageIndex: source.pageIndex } : { segmentId: source.segmentId }),
+        contentHash: storyAudioContentHash(source.text), file, durationMs: narration.durationMs, cues: narration.cues,
+        ...(narration.characterCost === null ? {} : { characterCost: narration.characterCost }),
+      };
+      if (!audioAssetMatches(asset, source, manifest)) throw new Error(`Áudio inválido: ${source.segmentId}`);
+      await mkdir(path.dirname(path.join(storyDir, file)), { recursive: true });
+      await writeFile(path.join(storyDir, file), narration.audio);
+      const oldIndex = current.findIndex(entry => entry.file === file);
+      if (oldIndex >= 0) current.splice(oldIndex, 1);
+      current.push(asset); generated++;
     }
+    manifest.pages = current.filter(asset => asset.pageIndex !== undefined);
+    manifest.segments = current.filter(asset => asset.segmentId !== undefined);
+    await writeManifestAtomic(manifestPath, manifest);
   }
+  console.log(`Concluído: ${generated} geradas; ${skipped} já estavam atuais.`);
 }
-
-console.log(`\n✓ Concluído! Gerados: ${generated} novos áudios | Ignorados (já existentes): ${skipped}`);

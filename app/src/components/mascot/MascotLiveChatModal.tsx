@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { MascotOficial } from './MascotOficial';
 import { BrandIcon } from '../illustrations/BrandIcon';
+import { LIVE_CONVERSATION_ENABLED } from '../../../shared/voice-policy';
 
 const DEFAULT_AGENT_ID = 'agent_9001k156nw8yfhq827h291a9d2qp';
 
@@ -25,9 +26,7 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
       setErrorMsg(null);
       setLastMessage('Oi! Estou te ouvindo, pode falar!');
     },
-    onDisconnect: () => {
-      // Sessão finalizada
-    },
+    onDisconnect: () => setLastMessage('Até a próxima! Podemos conversar de novo quando você quiser.'),
     onMessage: (payload) => {
       if (payload && payload.message) {
         setLastMessage(payload.message);
@@ -35,7 +34,7 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
     },
     onError: (err) => {
       console.error('ElevenLabs conversation error:', err);
-      const text = typeof err === 'string' ? err : (err as Error)?.message || 'Erro de conexão';
+      const text = err;
       if (text.toLowerCase().includes('permission') || text.toLowerCase().includes('notallowed')) {
         setErrorMsg('Preciso que você libere o microfone no navegador para podermos conversar!');
       } else {
@@ -49,45 +48,20 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
   const isSpeaking = conversation.isSpeaking;
   const isListening = conversation.isListening || (isConnected && !isSpeaking);
 
-  const handleStart = useCallback(async () => {
+  const { startSession, endSession } = conversation;
+  const handleStart = useCallback(() => {
     setErrorMsg(null);
-    try {
-      // Solicita permissão prévia do microfone no navegador
-      if (navigator.mediaDevices?.getUserMedia) {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-      }
-      await conversation.startSession({
-        agentId: agentId || DEFAULT_AGENT_ID,
-      });
-    } catch (err: unknown) {
-      console.error('Falha ao iniciar áudio:', err);
-      setErrorMsg('Por favor, autorize o microfone para conversar com o Cordeirinho!');
+    if (!LIVE_CONVERSATION_ENABLED) {
+      setErrorMsg('A conversa por voz ainda não está disponível.');
+      return;
     }
-  }, [conversation, agentId]);
-
-  const handleEnd = useCallback(async () => {
-    try {
-      await conversation.endSession();
-    } catch {
-      // Silencioso
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setErrorMsg('O microfone não está disponível. Abra o ReinoUp em um navegador com conexão segura.');
+      return;
     }
-  }, [conversation]);
-
-  const handleClose = useCallback(async () => {
-    if (isConnected || isConnecting) {
-      await handleEnd();
-    }
-    onClose();
-  }, [isConnected, isConnecting, handleEnd, onClose]);
-
-  // Encerra sessão ao desmontar
-  useEffect(() => {
-    return () => {
-      if (isConnected) {
-        conversation.endSession();
-      }
-    };
-  }, [isConnected, conversation]);
+    // O SDK abre e libera o microfone, inclusive ao cancelar uma conexão pendente.
+    startSession({ agentId });
+  }, [startSession, agentId]);
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
@@ -98,11 +72,11 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
           Cordeirinho Ao Vivo
         </span>
         <button
-          onClick={handleClose}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/5 text-navy/60 hover:bg-navy/10"
+          onClick={onClose}
+          className="flex min-h-11 items-center justify-center rounded-full bg-navy/5 px-3 text-sm text-navy hover:bg-navy/10"
           aria-label="Fechar"
         >
-          ✕
+          Fechar
         </button>
       </div>
 
@@ -178,7 +152,7 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
 
       {/* Mensagem de Erro (se houver) */}
       {errorMsg && (
-        <p className="rounded-xl bg-orange-light/30 px-3 py-2 text-xs font-bold text-navy-deep">
+        <p role="alert" className="rounded-xl bg-orange-light/30 px-3 py-2 text-sm font-bold text-navy-deep">
           {errorMsg}
         </p>
       )}
@@ -195,15 +169,16 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
               variant="secondary"
               size="md"
               className="flex-1"
+              disabled={!isConnected}
               onClick={() => conversation.setMuted(!conversation.isMuted)}
             >
               {conversation.isMuted ? '🔇 Desmutar' : '🎤 Mutar'}
             </Button>
             <Button
-              variant="danger"
+              variant="secondary"
               size="md"
               className="flex-1"
-              onClick={handleEnd}
+              onClick={endSession}
             >
               Encerrar
             </Button>
@@ -217,9 +192,17 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
 export function MascotLiveChatModal({ open, onClose, agentId }: MascotLiveChatModalProps) {
   return (
     <Modal open={open} onClose={onClose}>
-      <ConversationProvider>
+      {open && !LIVE_CONVERSATION_ENABLED && (
+        <div className="flex flex-col items-center gap-4 text-center">
+          <MascotOficial size={100} />
+          <h2 className="font-display text-xl font-bold text-navy">A voz do Cordeirinho está em preparação</h2>
+          <p role="status" className="text-navy">Estamos escolhendo uma voz brasileira para o ReinoUp. Enquanto isso, você pode continuar lendo e brincando.</p>
+          <Button full onClick={onClose}>Continuar aprendendo</Button>
+        </div>
+      )}
+      {open && LIVE_CONVERSATION_ENABLED && <ConversationProvider>
         <LiveChatSession onClose={onClose} agentId={agentId} />
-      </ConversationProvider>
+      </ConversationProvider>}
     </Modal>
   );
 }

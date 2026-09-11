@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettingsStore, type WeekdayCode } from '../store/settingsStore';
 import { useProgressStore } from '../store/progressStore';
 import { isWithinAllowedHours, todayKey } from '../lib/dates';
@@ -25,23 +25,20 @@ export function useAppLock(): AppLockState {
     return () => clearInterval(id);
   }, []);
 
-  return useMemo(() => {
-    if (settings.pausedManually) return { locked: true, reason: 'paused' };
+  if (settings.pausedManually) return { locked: true, reason: 'paused' };
 
-    // Parental screen-time control is opt-in: no schedule lock until a parent enables it.
-    if (!settings.screenTimeEnabled) return { locked: false, reason: null };
+  // Parental screen-time control is opt-in: no schedule lock until a parent enables it.
+  if (!settings.screenTimeEnabled) return { locked: false, reason: null };
 
-    const dayCode = todayCode();
-    if (!settings.allowedDays.includes(dayCode)) return { locked: true, reason: 'outside-hours' };
+  const dayCode = todayCode();
+  if (!settings.allowedDays.includes(dayCode)) return { locked: true, reason: 'outside-hours' };
 
-    if (!isWithinAllowedHours(new Date(), settings.allowedFrom, settings.allowedTo)) {
-      return { locked: true, reason: 'outside-hours' };
-    }
+  if (!isWithinAllowedHours(new Date(), settings.allowedFrom, settings.allowedTo)) {
+    return { locked: true, reason: 'outside-hours' };
+  }
 
-    const minutesToday = activityMinutes[todayKey()] ?? 0;
-    if (minutesToday >= settings.dailyTimeLimitMin) return { locked: true, reason: 'time-limit' };
+  const minutesToday = activityMinutes[todayKey()] ?? 0;
+  if (minutesToday >= settings.dailyTimeLimitMin) return { locked: true, reason: 'time-limit' };
 
-    return { locked: false, reason: null };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.pausedManually, settings.screenTimeEnabled, settings.allowedDays, settings.allowedFrom, settings.allowedTo, settings.dailyTimeLimitMin, activityMinutes]);
+  return { locked: false, reason: null };
 }

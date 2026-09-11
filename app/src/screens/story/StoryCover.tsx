@@ -33,7 +33,7 @@ export function StoryCover() {
   return (
     <div className="flex min-h-screen flex-col bg-navy">
       <div className="relative">
-        <Scene scene={story.cover} artId={story.id} showGuide height={260} className="rounded-none" />
+        <Scene scene={story.cover} artId={story.id} height={260} className="rounded-none" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-navy-deep/85 to-transparent" />
         <div className="absolute inset-x-0 top-0">
           <TopBar
@@ -63,7 +63,7 @@ export function StoryCover() {
           full
           size="lg"
           className="mt-6"
-          onClick={() => navigate(`/app/historia/${story.id}/capitulo/${nextChapterIndex}`)}
+          onClick={() => navigate(`/app/historia/${story.id}/capitulo/${isRereading ? 0 : nextChapterIndex}`)}
         >
           {isRereading ? 'Ler novamente' : 'Ler história'}
         </Button>

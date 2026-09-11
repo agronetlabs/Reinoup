@@ -297,6 +297,51 @@ export const VERSES: Verse[] = [
       '8-10': 'No princípio, Deus criou os céus e a terra.',
     },
   },
+  {
+    id: 'v-gn-02',
+    reference: 'Gênesis 3:9',
+    category: 'obediencia',
+    text: {
+      '5-7': 'Deus chamou Adão: Onde você está?',
+      '8-10': 'O Senhor Deus chamou o homem e perguntou: Onde você está?',
+    },
+  },
+  {
+    id: 'v-gn-03',
+    reference: 'Gênesis 4:7',
+    category: 'obediencia',
+    text: {
+      '5-7': 'Faça o que é certo. A raiva quer mandar, mas você pode escolher o bem.',
+      '8-10': 'Faça o que é certo. O pecado quer dominar você, mas você deve dominá-lo.',
+    },
+  },
+  {
+    id: 'v-gn-04',
+    reference: 'Gênesis 5:24',
+    category: 'presenca',
+    text: {
+      '5-7': 'Enoque andava com Deus, e Deus o levou para perto dele.',
+      '8-10': 'Enoque andou com Deus; então Deus o levou para junto de si.',
+    },
+  },
+  {
+    id: 'v-gn-05',
+    reference: 'Gênesis 6:22',
+    category: 'obediencia',
+    text: {
+      '5-7': 'Noé fez tudo como Deus havia mandado.',
+      '8-10': 'Noé fez tudo exatamente como Deus havia ordenado.',
+    },
+  },
+  {
+    id: 'v-gn-06',
+    reference: 'Gênesis 11:9',
+    category: 'obediencia',
+    text: {
+      '5-7': 'Ali Deus confundiu a língua do povo e espalhou as pessoas.',
+      '8-10': 'Por isso a cidade foi chamada Babel, porque ali o Senhor confundiu a língua de todos.',
+    },
+  },
 ];
 
 export function getVerse(id: string): Verse | undefined {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
@@ -9,6 +9,9 @@ import { BrandIcon } from '../../components/illustrations/BrandIcon';
 
 export function ParentPinGate() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const candidate = location.state?.returnTo;
+  const returnTo = typeof candidate === 'string' && /^\/app\/planos(?:\?|$)/.test(candidate) ? candidate : '/pais';
   const hasParentPin = useAuthStore((s) => s.hasParentPin());
   const verifyParentPin = useAuthStore((s) => s.verifyParentPin);
   const setParentPin = useAuthStore((s) => s.setParentPin);
@@ -44,13 +47,13 @@ export function ParentPinGate() {
       }
       setParentPin(pin);
       unlockParentArea();
-      navigate('/pais', { replace: true });
+      navigate(returnTo, { replace: true });
       return;
     }
     // enter
     if (verifyParentPin(pin)) {
       unlockParentArea();
-      navigate('/pais', { replace: true });
+      navigate(returnTo, { replace: true });
     } else {
       setError(true);
       setPin('');

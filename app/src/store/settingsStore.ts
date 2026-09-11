@@ -31,8 +31,6 @@ interface SettingsState {
   pausedManually: boolean;
   notifications: NotificationToggles;
   soundEffectsEnabled: boolean;
-  plan: 'essencial' | 'completo' | 'familia' | null;
-  billingCycle: 'mensal' | 'anual';
 
   setAgeBand: (b: AgeBand) => void;
   toggleContent: (key: keyof ContentToggles) => void;
@@ -43,7 +41,6 @@ interface SettingsState {
   toggleWeekday: (day: WeekdayCode) => void;
   setPaused: (paused: boolean) => void;
   toggleNotification: (key: keyof NotificationToggles) => void;
-  subscribe: (plan: 'essencial' | 'completo' | 'familia', cycle: 'mensal' | 'anual') => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -70,8 +67,6 @@ export const useSettingsStore = create<SettingsState>()(
         novosConteudos: true,
       },
       soundEffectsEnabled: true,
-      plan: null,
-      billingCycle: 'mensal',
 
       setAgeBand: (b) => set({ ageBand: b }),
       toggleContent: (key) => set((s) => ({ contentToggles: { ...s.contentToggles, [key]: !s.contentToggles[key] } })),
@@ -85,8 +80,16 @@ export const useSettingsStore = create<SettingsState>()(
         })),
       setPaused: (paused) => set({ pausedManually: paused }),
       toggleNotification: (key) => set((s) => ({ notifications: { ...s.notifications, [key]: !s.notifications[key] } })),
-      subscribe: (plan, cycle) => set({ plan, billingCycle: cycle }),
     }),
-    { name: 'reinoup-settings' }
+    {
+      name: 'reinoup-settings',
+      version: 1,
+      migrate: (persisted) => {
+        const settings = { ...(persisted as Record<string, unknown>) };
+        delete settings.plan;
+        delete settings.billingCycle;
+        return settings as unknown as SettingsState;
+      },
+    }
   )
 );

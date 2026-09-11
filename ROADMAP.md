@@ -17,7 +17,7 @@ Atualizado em 23/08/2026. Handoff para continuidade no GitHub Copilot Pro.
 **Marca e design**
 - Paleta oficial exata, `theme-color`, manifest e ícone do app corrigidos
 - Cores semânticas definidas (acerto, "vamos de novo", perigo adulto) com contraste AA
-- Mascote 3D e logo oficiais em WebP com fallback PNG e vetorial
+- Mascote 3D e logo oficiais em WebP com fallback PNG; o mascote usa a mesma arte oficial embutida se ambos falharem, nunca o vetor antigo
 - Iconografia da marca (9 ícones SVG) no lugar de emoji
 - Telas reconstruídas contra o mockup: **Home · Desafios Diários · Lista de Histórias · Perfil · Quiz · Splash · Seleção de Perfil**
 

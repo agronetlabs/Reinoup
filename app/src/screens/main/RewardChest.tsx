@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
@@ -7,6 +7,7 @@ import { MascotOficial } from '../../components/mascot/MascotOficial';
 import { BrandIcon } from '../../components/illustrations/BrandIcon';
 import { useProgressStore } from '../../store/progressStore';
 import { sfx } from '../../lib/sfx';
+import { scheduleChestOpening } from '../../lib/chest-opening';
 
 export function RewardChest() {
   const navigate = useNavigate();
@@ -14,21 +15,12 @@ export function RewardChest() {
   const dailyChallenge = useProgressStore((s) => s.dailyChallenge);
   const [reward, setReward] = useState<{ coins: number; xp: number; sticker: boolean } | null>(null);
   const [opening, setOpening] = useState(true);
-  const attempted = useRef(false);
 
   useEffect(() => {
-    if (attempted.current) return;
-    attempted.current = true;
-    const r = openDailyChest();
-    const id = setTimeout(() => {
+    return scheduleChestOpening(openDailyChest, (r) => {
       setReward(r);
       setOpening(false);
-      if (r) {
-        sfx.chestOpen();
-        setTimeout(() => sfx.coin(), 350);
-      }
-    }, 900);
-    return () => clearTimeout(id);
+    }, () => sfx.chestOpen(), () => sfx.coin());
   }, [openDailyChest]);
 
   return (

@@ -1,105 +1,44 @@
-﻿/**
- * Cria uma sessão do Stripe Checkout para uma assinatura do ReinoUp.
- *
- * Roda como Cloudflare Pages Function (mesma infra que já publica o app —
- * nenhum servidor novo). Precisa de STRIPE_SECRET_KEY configurada como
- * variável de ambiente no painel do Cloudflare Pages (Settings → Environment
- * variables), nunca commitada no repo.
- *
- * Usa `price_data` inline (preço criado na hora da sessão) em vez de Price IDs
- * pré-cadastrados no Stripe — assim não é preciso configurar produtos no
- * Dashboard do Stripe antes de vender. Se algum dia quiserem relatórios nativos
- * do Stripe por produto, é só migrar para Price IDs fixos aqui.
- *
- * Espelha os planos de app/src/content/plans.ts — mantenha os dois em sync.
- */
+import { PAID_PLAN_ID, PRICE_CENTS, PRICE_VERSION, isCycle } from '../../shared/billing';
+import { authenticateFamily, type SupabaseEnv } from './_supabase';
 
-interface Env {
-  STRIPE_SECRET_KEY: string;
-}
-
-type PlanId = 'essencial' | 'completo' | 'familia';
-type Cycle = 'mensal' | 'anual';
-
-const PLAN_PRICES: Record<PlanId, { name: string; monthlyPrice: number }> = {
-  essencial: { name: 'ReinoUp Essencial', monthlyPrice: 10.9 },
-  completo: { name: 'ReinoUp Completo', monthlyPrice: 19.9 },
-  familia: { name: 'ReinoUp Família', monthlyPrice: 29.9 },
-};
-
-const ANNUAL_DISCOUNT = 0.2;
-
-function isPlanId(value: unknown): value is PlanId {
-  return value === 'essencial' || value === 'completo' || value === 'familia';
-}
-
-function isCycle(value: unknown): value is Cycle {
-  return value === 'mensal' || value === 'anual';
-}
+export interface Env extends SupabaseEnv { STRIPE_SECRET_KEY: string }
+export const STRIPE_API_VERSION = '2025-06-30.basil';
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
-  if (!env.STRIPE_SECRET_KEY) {
-    return Response.json(
-      { error: 'Pagamento ainda não configurado neste ambiente (falta STRIPE_SECRET_KEY).' },
-      { status: 503 }
-    );
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Corpo da requisição inválido.' }, { status: 400 });
-  }
-
-  const { planId, cycle, familyId } = (body ?? {}) as { planId?: unknown; cycle?: unknown; familyId?: unknown };
-  if (!isPlanId(planId) || !isCycle(cycle)) {
-    return Response.json({ error: 'planId ou cycle inválido.' }, { status: 400 });
-  }
-
-  const plan = PLAN_PRICES[planId];
+  if (!env.STRIPE_SECRET_KEY) return Response.json({ error: 'Pagamento indisponível. Tente mais tarde.' }, { status: 503 });
+  let body;
+  try { body = await request.json() as Record<string, unknown>; }
+  catch { return Response.json({ error: 'Corpo inválido.' }, { status: 400 }); }
+  const { planId, cycle, familyId } = body ?? {};
+  if (planId !== PAID_PLAN_ID || !isCycle(cycle)) return Response.json({ error: 'Plano ou ciclo inválido.' }, { status: 400 });
+  const family = await authenticateFamily(request, env, familyId);
+  if (family instanceof Response) return family;
   const origin = new URL(request.url).origin;
-
-  const unitAmountCents =
-    cycle === 'anual'
-      ? Math.round(plan.monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT) * 100)
-      : Math.round(plan.monthlyPrice * 100);
-  const interval = cycle === 'anual' ? 'year' : 'month';
-
-  const params = new URLSearchParams();
-  params.set('mode', 'subscription');
-  params.set('success_url', `${origin}/app/planos?status=success&plan=${planId}&cycle=${cycle}`);
-  params.set('cancel_url', `${origin}/app/planos?status=cancelled`);
-  params.set('line_items[0][quantity]', '1');
-  params.set('line_items[0][price_data][currency]', 'brl');
-  params.set('line_items[0][price_data][unit_amount]', String(unitAmountCents));
-  params.set('line_items[0][price_data][recurring][interval]', interval);
-  params.set('line_items[0][price_data][product_data][name]', `${plan.name} (${cycle})`);
-  params.set('metadata[planId]', planId);
-  params.set('metadata[cycle]', cycle);
-  // O webhook le isso para saber de qual familia e a assinatura.
-  if (typeof familyId === 'string' && familyId.length > 0) {
-    params.set('metadata[familyId]', familyId);
-  }
-
-  const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: params.toString(),
+  const params = new URLSearchParams({
+    mode: 'subscription',
+    success_url: `${origin}/app/planos?status=success`,
+    cancel_url: `${origin}/app/planos?status=cancelled`,
+    'line_items[0][quantity]': '1',
+    'line_items[0][price_data][currency]': 'brl',
+    'line_items[0][price_data][unit_amount]': String(PRICE_CENTS[cycle]),
+    'line_items[0][price_data][recurring][interval]': cycle === 'anual' ? 'year' : 'month',
+    'line_items[0][price_data][product_data][name]': `ReinoUp (${cycle}) — conta do responsável`,
+    client_reference_id: family,
   });
-
-  const data = await stripeResponse.json<{ url?: string; error?: { message: string } }>();
-
-  if (!stripeResponse.ok || !data.url) {
-    return Response.json(
-      { error: data.error?.message ?? 'Não foi possível criar a sessão de pagamento.' },
-      { status: 502 }
-    );
+  for (const [key, value] of Object.entries({ planId, cycle, familyId: family, priceVersion: PRICE_VERSION })) {
+    params.set(`metadata[${key}]`, value);
+    params.set(`subscription_data[metadata][${key}]`, value);
   }
-
-  return Response.json({ url: data.url });
+  try {
+    const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded', 'Stripe-Version': STRIPE_API_VERSION },
+      body: params.toString(),
+    });
+    const data = await response.json() as { url?: string };
+    if (!response.ok || !data.url) throw new Error();
+    return Response.json({ url: data.url });
+  } catch {
+    return Response.json({ error: 'Não foi possível iniciar o pagamento. Tente novamente.' }, { status: 502 });
+  }
 };
-

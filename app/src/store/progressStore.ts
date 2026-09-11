@@ -162,6 +162,7 @@ export const useProgressStore = create<Store>()(
       }
 
       function bumpDailyTask(taskId: DailyTaskId, incrementBy: number) {
+        get().ensureFreshDaily();
         set((s) => {
           const daily = s.dailyChallenge;
           const tasks = daily.tasks.map((t) => {
@@ -222,6 +223,10 @@ export const useProgressStore = create<Store>()(
         },
 
         completeChapter: (storyId, chapterIndex, totalChapters) => {
+          const story = getStory(storyId);
+          if (!story || totalChapters !== story.chapters.length || !Number.isInteger(chapterIndex)
+            || chapterIndex < 0 || chapterIndex >= totalChapters
+            || chapterIndex > (get().stories[storyId]?.chaptersCompleted ?? 0)) return;
           set((s) => {
             const prev = s.stories[storyId] ?? { chaptersCompleted: 0, completed: false, quizAttempts: 0 };
             const chaptersCompleted = Math.max(prev.chaptersCompleted, chapterIndex + 1);
@@ -248,6 +253,9 @@ export const useProgressStore = create<Store>()(
         },
 
         submitQuiz: (storyId, score, total) => {
+          const story = getStory(storyId);
+          if (!story || total !== story.quiz.length || total <= 0
+            || !Number.isInteger(score) || score < 0 || score > total) return;
           set((s) => {
             const prev = s.stories[storyId] ?? { chaptersCompleted: 0, completed: false, quizAttempts: 0 };
             const quizBestScore = Math.max(prev.quizBestScore ?? 0, score);
@@ -266,11 +274,13 @@ export const useProgressStore = create<Store>()(
         },
 
         collectVerse: (verseId) => {
+          if (!getVerse(verseId)) return;
+          get().ensureFreshDaily();
+          bumpDailyTask('decorar-versiculo', 1);
           if (get().versesCollected.includes(verseId)) return;
           set((s) => ({ versesCollected: [...s.versesCollected, verseId] }));
           get().addCoins(VERSE_MEMORIZED_COINS);
           get().addXp(VERSE_MEMORIZED_XP);
-          bumpDailyTask('decorar-versiculo', 1);
           logActivity('versiculo', getVerse(verseId)?.reference ?? verseId);
           applyStreak();
           checkBadges();
@@ -310,17 +320,18 @@ export const useProgressStore = create<Store>()(
         },
 
         openDailyChest: () => {
+          get().ensureFreshDaily();
           const daily = get().dailyChallenge;
           const allDone = daily.tasks.every((t) => t.done);
           if (!allDone || daily.chestOpened) return null;
           const reward = rollChestReward();
+          set((s) => ({ dailyChallenge: { ...s.dailyChallenge, chestOpened: true } }));
           get().addCoins(reward.coins);
           get().addXp(reward.xp);
           if (reward.sticker) {
             const stickerId = uid('sticker');
             set((s) => ({ stickersCollected: [...s.stickersCollected, stickerId] }));
           }
-          set((s) => ({ dailyChallenge: { ...s.dailyChallenge, chestOpened: true } }));
           return reward;
         },
 
@@ -368,4 +379,3 @@ export const useProgressStore = create<Store>()(
     { name: 'reinoup-progress' }
   )
 );
-

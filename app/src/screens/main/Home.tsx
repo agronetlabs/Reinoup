@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CoinBadge } from '../../components/ui/CoinBadge';
 import { ProgressBar } from '../../components/ui/ProgressBar';
-import { Mascot } from '../../components/mascot/Mascot';
 import { MascotOficial } from '../../components/mascot/MascotOficial';
 import { Scene } from '../../components/illustrations/Scene';
 import { BrandIcon } from '../../components/illustrations/BrandIcon';
@@ -45,14 +44,8 @@ export function Home() {
     <div className="flex flex-col gap-6 px-4 pb-8 pt-5 safe-top">
       {/* ---- cabeçalho ---- */}
       <header className="flex items-start gap-3">
-        <Link to="/app/avatar" className="shrink-0 rounded-full bg-white p-1 shadow-[var(--shadow-card)]">
-          <Mascot
-            size={56}
-            animated={false}
-            outfitColor={getAvatarItem(avatar.outfit)?.value}
-            accessory={getAvatarItem(avatar.accessory ?? '')?.value}
-            background={getAvatarItem(avatar.background)?.value}
-          />
+        <Link to="/app/avatar" aria-label="Meu avatar" className="shrink-0 overflow-hidden rounded-full bg-white p-1 shadow-[var(--shadow-card)]" style={{ backgroundColor: getAvatarItem(avatar.background)?.value }}>
+          <MascotOficial size={56} recorte="busto" />
         </Link>
 
         <div className="min-w-0 flex-1 pt-1">

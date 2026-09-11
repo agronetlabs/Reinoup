@@ -4,21 +4,20 @@ import { useProgressStore } from '../store/progressStore';
 const FLUSH_INTERVAL_MS = 30_000;
 
 /** Accumulates real foreground time and periodically flushes minutes into progressStore for the parent report. */
-export function useActivityTimer() {
+export function useActivityTimer(active = true) {
   const addActivityMinutes = useProgressStore((s) => s.addActivityMinutes);
   const secondsRef = useRef(0);
 
   useEffect(() => {
     let lastTick = Date.now();
+    let visible = document.visibilityState === 'visible';
 
     const tick = () => {
-      if (document.visibilityState === 'visible') {
-        const now = Date.now();
+      const now = Date.now();
+      if (active && visible) {
         secondsRef.current += (now - lastTick) / 1000;
-        lastTick = now;
-      } else {
-        lastTick = Date.now();
       }
+      lastTick = now;
     };
 
     const flush = () => {
@@ -35,15 +34,17 @@ export function useActivityTimer() {
     }, FLUSH_INTERVAL_MS);
 
     const onVisibility = () => {
-      lastTick = Date.now();
+      tick();
+      flush();
+      visible = document.visibilityState === 'visible';
     };
     document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       clearInterval(interval);
+      tick();
       flush();
       document.removeEventListener('visibilitychange', onVisibility);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [active, addActivityMinutes]);
 }
