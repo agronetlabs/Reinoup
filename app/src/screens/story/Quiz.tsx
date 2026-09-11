@@ -1,6 +1,11 @@
 import { useEffect, useReducer, useRef } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AUDIO_PILOT_STORY_ID, QUIZ_POSITIVE_FEEDBACK, quizAudioSegments } from '../../../shared/story-audio-segments';
+import { getApprovedQuizCardArt } from '../../../shared/quiz-card-art';
+import { StorySegmentAudio } from '../../components/ui/StorySegmentAudio';
+import { useSettingsStore } from '../../store/settingsStore';
+import { stopActiveStoryAudio } from '../../lib/story-audio-player';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
@@ -22,6 +27,8 @@ export function Quiz() {
 }
 
 function QuizRound({ story }: { story: Story }) {
+  const ageBand = useSettingsStore(s => s.ageBand);
+  const reducedMotion = useReducedMotion();
   const navigate = useNavigate();
   const submitQuiz = useProgressStore((s) => s.submitQuiz);
   const total = story.quiz.length;
@@ -43,6 +50,7 @@ function QuizRound({ story }: { story: Story }) {
 
   function selectOption(optIndex: number) {
     if (revealed || !question) return;
+    stopActiveStoryAudio();
     const isCorrect = optIndex === question.correctIndex;
     dispatch({ type: 'answer', selected: optIndex, correct: isCorrect });
 
@@ -54,6 +62,7 @@ function QuizRound({ story }: { story: Story }) {
   }
 
   function handleNext() {
+    stopActiveStoryAudio();
     dispatch({ type: 'next' });
   }
 
@@ -68,8 +77,12 @@ function QuizRound({ story }: { story: Story }) {
 
       <div className="flex flex-1 flex-col gap-5 px-4 pt-6">
         <AnimatePresence mode="wait">
-          <motion.div key={`${currentQIndex}-${pointer}`} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className="flex flex-col gap-4">
+          <motion.div key={`${currentQIndex}-${pointer}`} initial={reducedMotion ? false : { opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: reducedMotion ? 0 : -12 }} transition={reducedMotion ? { duration: 0 } : undefined} className="flex flex-col gap-4">
             <h2 className="font-display text-center text-xl font-bold text-navy">{question.question}</h2>
+            {story.id === AUDIO_PILOT_STORY_ID && !revealed && <StorySegmentAudio
+              sources={quizAudioSegments(story.id, question, ageBand)}
+              labels={['pergunta', ...question.options.map((_, i) => `opção ${i + 1}`)]}
+            />}
             {/* Com figuras vira grade 2×2 — a criança que ainda não lê responde pela imagem. */}
             <div className={question.optionIcons ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-1 gap-3'}>
               {question.options.map((opt, i) => (
@@ -81,6 +94,7 @@ function QuizRound({ story }: { story: Story }) {
                   disabled={revealed}
                   onClick={() => selectOption(i)}
                   icon={question.optionIcons?.[i]}
+                  image={getApprovedQuizCardArt(story.id, question.id, i, import.meta.env.BASE_URL)}
                 >
                   {opt}
                 </ChoiceCard>
@@ -88,9 +102,14 @@ function QuizRound({ story }: { story: Story }) {
             </div>
             {revealed && (
               <SpeechBubble pose={selected === question.correctIndex ? 'comemorando' : 'pensando'} tone={selected === question.correctIndex ? 'success' : 'info'}>
-                {selected === question.correctIndex ? 'Muito bem!' : question.explanation}
+                {selected === question.correctIndex ? QUIZ_POSITIVE_FEEDBACK : question.explanation}
+                {story.id === AUDIO_PILOT_STORY_ID && selected === question.correctIndex && <p className="mt-2">{question.explanation}</p>}
               </SpeechBubble>
             )}
+            {story.id === AUDIO_PILOT_STORY_ID && revealed && selected !== null && <StorySegmentAudio
+              sources={quizAudioSegments(story.id, question, ageBand, selected)}
+              labels={selected === question.correctIndex ? ['incentivo', 'explicação'] : ['explicação']}
+            />}
           </motion.div>
         </AnimatePresence>
       </div>

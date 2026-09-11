@@ -1,7 +1,8 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { audioAssetMatches, isStoryAudioManifest } from '../../shared/story-audio-manifest.ts';
 
-export const MANIFEST_VERSION = 1;
+export const MANIFEST_VERSION = 2;
 export const WARM_NARRATION_SETTINGS = Object.freeze({
   stability: 0.42,
   similarity_boost: 0.78,
@@ -24,9 +25,16 @@ export function alignmentToCues(alignment) {
   const starts = alignment?.character_start_times_seconds;
   const ends = alignment?.character_end_times_seconds;
   if (!Array.isArray(characters) || !Array.isArray(starts) || !Array.isArray(ends)) return [];
+  if (characters.length !== starts.length || characters.length !== ends.length
+    || characters.some(character => typeof character !== 'string' || !character.length)
+    || starts.some((start, index) => !Number.isFinite(start) || start < 0
+      || !Number.isFinite(ends[index]) || ends[index] < start
+      || (index > 0 && start < ends[index - 1]))) return [];
 
   const cues = [];
   let wordStart = -1;
+  const offsets = [0];
+  for (const character of characters) offsets.push(offsets.at(-1) + character.length);
   for (let index = 0; index <= characters.length; index++) {
     const character = characters[index];
     const isBoundary = index === characters.length || /\s/.test(character);
@@ -36,8 +44,8 @@ export function alignmentToCues(alignment) {
         text: characters.slice(wordStart, index).join(''),
         startMs: Math.round(Number(starts[wordStart]) * 1000),
         endMs: Math.round(Number(ends[index - 1]) * 1000),
-        characterStart: wordStart,
-        characterEnd: index,
+        characterStart: offsets[wordStart],
+        characterEnd: offsets[index],
       });
       wordStart = -1;
     }
@@ -79,6 +87,7 @@ export async function requestNarration({
       if (!payload.audio_base64) throw new Error('ElevenLabs não retornou audio_base64');
       const alignment = payload.alignment ?? payload.normalized_alignment;
       const cues = alignmentToCues(alignment);
+      if (!cues.length || alignment.characters.join('') !== text) throw new Error('Alinhamento inválido ou divergente do texto versionado');
       const durationMs = cues.at(-1)?.endMs ?? 0;
       const rawCharacterCost = response.headers.get('character-cost');
       const characterCost = rawCharacterCost === null ? null : Number(rawCharacterCost);
@@ -103,10 +112,21 @@ export async function requestNarration({
 export async function readManifest(filePath) {
   try {
     const parsed = JSON.parse(await readFile(filePath, 'utf8'));
-    return parsed.version === MANIFEST_VERSION && Array.isArray(parsed.pages) ? parsed : null;
+    return isStoryAudioManifest(parsed, path.basename(path.dirname(filePath))) ? parsed : null;
   } catch {
     return null;
   }
+}
+
+export function retainedAudioEntries(previous, sources, fileExists, authorize) {
+  if (!previous) return [];
+  const upgraded = [...previous.pages, ...(previous.segments ?? [])].map(asset =>
+    previous.version === 1 ? { ...asset, role: 'narration', voiceId: previous.voiceId, modelId: previous.modelId, voiceSettings: previous.voiceSettings } : asset);
+  return upgraded.filter(asset => {
+    const source = sources.find(item => item.ageBand === asset.ageBand && (item.pageIndex !== undefined
+      ? item.chapterId === asset.chapterId && item.pageIndex === asset.pageIndex : item.segmentId === asset.segmentId));
+    return source && audioAssetMatches(asset, source, { ...previous, version: 2 }, authorize) && fileExists(asset.file);
+  });
 }
 
 export async function writeManifestAtomic(filePath, manifest) {

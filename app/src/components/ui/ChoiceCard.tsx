@@ -1,6 +1,8 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { Motif } from '../../content/types';
 import { MotifIcon } from '../illustrations/MotifIcon';
+import type { QuizCardImage } from '../../../shared/quiz-card-art';
 
 interface ChoiceCardProps {
   children: React.ReactNode;
@@ -11,9 +13,14 @@ interface ChoiceCardProps {
   disabled?: boolean;
   /** Quando presente, o card vira ilustrado: figura em cima, rótulo embaixo. */
   icon?: Motif;
+  image?: QuizCardImage;
 }
 
-export function ChoiceCard({ children, selected, correct, revealed, onClick, disabled, icon }: ChoiceCardProps) {
+export function ChoiceCard({ children, selected, correct, revealed, onClick, disabled, icon, image }: ChoiceCardProps) {
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  const reducedMotion = useReducedMotion();
+  const showImage = image && failedSource !== image.src;
+  const illustrated = Boolean(icon || image);
   let stateClasses = 'border-navy/10 bg-white';
   if (revealed && selected && correct) stateClasses = 'border-green bg-green-light';
   // Errar não pune: sem vermelho, sem alarme. Azul da marca = "vamos de novo".
@@ -28,18 +35,36 @@ export function ChoiceCard({ children, selected, correct, revealed, onClick, dis
   return (
     <motion.button
       type="button"
-      whileTap={disabled ? undefined : { scale: 0.98 }}
+      whileTap={disabled || reducedMotion ? undefined : { scale: 0.98 }}
       onClick={onClick}
       disabled={disabled}
       className={`relative min-h-11 w-full rounded-2xl border-2 font-semibold text-navy-deep transition-colors ${
-        icon ? 'p-3 text-center' : 'p-4 text-left'
+        image ? 'overflow-hidden p-0 text-center shadow-[var(--shadow-card)]' : icon ? 'p-3 text-center' : 'p-4 text-left'
       } ${stateClasses}`}
     >
-      {icon ? (
-        <div className="flex flex-col items-center gap-2">
-          <div className="absolute right-2 top-2">{selo}</div>
-          <MotifIcon motif={icon} size={72} />
-          <span className="text-sm leading-tight">{children}</span>
+      {illustrated ? (
+        <div className={`flex flex-col items-center ${image ? '' : 'gap-2'}`}>
+          <div className="absolute right-2 top-2 z-10">{selo}</div>
+          {showImage ? (
+            <img
+              src={image.src}
+              alt={image.alt}
+              width={512}
+              height={384}
+              decoding="async"
+              className="aspect-[4/3] w-full object-cover"
+              onError={() => {
+                console.warn(`Ilustração indisponível no card: ${image.src}`);
+                setFailedSource(image.src);
+              }}
+            />
+          ) : (
+            <div className={image ? 'flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 bg-cream' : undefined}>
+              {icon && <MotifIcon motif={icon} size={72} />}
+              {image && <span className="text-xs text-navy">Ilustração indisponível</span>}
+            </div>
+          )}
+          <span className={image ? 'flex min-h-14 w-full items-center justify-center px-3 py-2 font-display text-base font-bold leading-tight' : 'text-sm leading-tight'}>{children}</span>
         </div>
       ) : (
         <div className="flex items-center justify-between gap-3">

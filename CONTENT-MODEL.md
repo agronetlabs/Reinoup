@@ -112,17 +112,39 @@ Direção aprovada: ilustração original de animação familiar 3D, com express
 legíveis, materiais táteis e iluminação que ajuda a contar a história. Referências
 de estúdio indicam acabamento, não autorizam copiar personagens nem redefinir a marca.
 O piloto raster é `gn-02`; não considerar o catálogo inteiro convertido.
+A direção confirmada em 2026-09-11 é levar o mesmo acabamento 3D original
+aos cards de todas as telas, começando pela jornada completa de Adão e Eva.
+**Regra global, sem exceção de história ou tela:** toda imagem de card, capa
+e cena de leitura deve seguir esse acabamento, chamado pelo responsável de
+"Disney Club 3D". Inclui Criação, Caim e Abel, histórias bloqueadas, alternativas
+de quiz/escolha e figuras de jogos, desafios e recompensas. O conteúdo visual
+continua original e o mascote oficial não é redesenhado.
+Os SVGs existentes permanecem como fallback enquanto cada nova arte é produzida
+e aprovada; são uma pendência de migração, nunca uma exceção aprovada ao padrão.
+Sombras, gradientes ou converter SVG para WebP não tornam uma arte plana uma
+ilustração 3D. Não considerar uma tela visualmente concluída enquanto suas
+imagens principais dependerem desses desenhos provisórios.
+O alcance global da direção visual não amplia automaticamente o lote pago:
+produção e publicação continuam sujeitas às autorizações específicas abaixo.
 
 | Onde | Formato | Regra de produção |
 |---|---|---|
 | Capa da história | WebP raster + SVG de reserva | Título e referência em HTML, nunca embutidos na imagem |
-| Figuras do quiz (`optionIcons`) | vetor (`MotifIcon`) | Formas simples e reconhecíveis em tamanho pequeno |
+| Figuras dos cards de quiz e escolha | WebP 3D aprovado; `MotifIcon` como fallback | Uma resposta legível por imagem; o texto continua em HTML |
 | Cena de capítulo | WebP quando aprovado; SVG/motivos como fallback | Uma ação e uma emoção legíveis por cena |
-| Mascote | arte oficial de boné, separada da cena | Não redesenhar nem gerar junto com os personagens bíblicos |
+| Mascote | arte oficial de boné, separada da cena | Não sobrepor às imagens durante a leitura; reservar para orientação e feedback. Não redesenhar nem gerar junto com os personagens bíblicos |
 
 `MotifIcon` é o catálogo compartilhado: cada motivo é desenhado uma vez e serve
 cena, jogo da memória e quiz ilustrado. Motivo novo entra em `types.ts` **e**
 ganha um SVG em `MotifIcon.tsx`.
+
+O primeiro lote de amostras dos cards do piloto tem quatro imagens para
+`gn-02-q2`: árvore com fruto, pão assado, água de rio e alimento dos animais.
+Não representar pão só por trigo nem alimento só pela figura do animal.
+Todas as alternativas devem ter o mesmo acabamento e destaque, sem pistas
+visuais de qual é a correta. Manter texto, controles e selo de acerto fora da arte.
+Produzir amostras não autoriza publicá-las: `app/shared/quiz-card-art.ts`
+separa o inventário do lote da lista de artes aprovadas, ainda vazia.
 
 ### Continuidade dos personagens e da narrativa
 
@@ -177,6 +199,11 @@ não constituem critérios editoriais nem podem virar promessas sem evidência.
   de português brasileiro nativo. Registrar o ID autorizado em
   `app/shared/voice-policy.ts`; não reutilizar uma voz pessoal pelo fato de ela
   estar disponível na conta. Não regenerar lote antes da aprovação da nova amostra.
+- A autorização é por função: narração, mascote, explicações, hero, desafios
+  e momentos premium. Registrar referências não sensíveis da permissão de uso
+  no ReinoUp e do aceite humano da amostra. Avaliar as seis funções não obriga
+  usar seis vozes, criar telas ou alterar ofertas. Aprovação de narração estática
+  nunca libera conversa ao vivo; essa permissão permanece independente e desligada.
 - Preservar Baloo 2 nos títulos e Nunito na leitura; usar os tokens da interface,
   sem tentar limitar toda a natureza às cores dos botões.
 - Conferir rostos e ações em capa, card e leitor; não aprovar só pela imagem ampliada.
@@ -184,9 +211,19 @@ não constituem critérios editoriais nem podem virar promessas sem evidência.
   para introduzir uma voz de guia.
 - Narração estática usa o texto versionado e marcações por palavra. Alterar o
   texto exige revalidar/regenerar o áudio correspondente.
+- No piloto `gn-02`, escolha, quiz e resumo também são entradas narráveis,
+  com IDs estáveis derivados do conteúdo em `app/shared/story-audio-segments.ts`.
+  Manifestos v2 registram voz e função por entrada; perguntas e alternativas
+  nunca antecipam a narração do feedback. Todas as falas dependem de toque,
+  compartilham o ciclo de pausa/interrupção e não se sobrepõem.
 - Troca de imagem por capítulo e destaque de palavras não são animação facial.
   Movimento deve servir à compreensão, respeitar movimento reduzido e não
   avançar páginas automaticamente.
+- Celebrar marcos de aprendizagem, não apenas responder a cada toque.
+  Concluir uma aula, terminar um desafio ou conquistar uma medalha deve ter
+  mais destaque que navegar ou selecionar uma opção. Manter feedback cotidiano
+  discreto e acolhedor; sons e animações de celebração respeitam as configurações
+  de som e movimento reduzido. Não criar recompensa por toque nem punição por erro.
 - Sons ambientais, download completo de histórias, poses articuladas e gravações
   persistentes são etapas próprias, não funcionalidades prontas por existir um SDK.
 - Aprovar em conjunto leitura, narração, pausa/retomada, escolha, quiz e resumo.

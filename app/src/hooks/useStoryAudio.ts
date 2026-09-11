@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { createStoryAudioPlayer, idlePlayback, type PlaybackRequest, type SpeechSource } from '../lib/story-audio-player';
+import { attachAudioLifecycle, createStoryAudioPlayer, idlePlayback, type PlaybackRequest, type SpeechSource } from '../lib/story-audio-player';
 import { BRAZILIAN_VOICE_UNAVAILABLE, pickBrazilianVoice } from '../lib/brazilian-voice';
 
 function browserSpeech(): SpeechSource | null {
@@ -44,20 +44,21 @@ export function useStoryAudio(enabled = true) {
   useEffect(() => {
     const player = createStoryAudioPlayer(url => new Audio(url), browserSpeech(), setState);
     playerRef.current = player;
-    const onVisibility = () => { if (document.hidden) player.stop(); };
-    window.addEventListener('pagehide', player.stop);
-    document.addEventListener('visibilitychange', onVisibility);
+    const detach = attachAudioLifecycle(player, window, document);
     return () => {
-      window.removeEventListener('pagehide', player.stop);
-      document.removeEventListener('visibilitychange', onVisibility);
+      detach();
       player.dispose();
       playerRef.current = null;
     };
   }, []);
-  const play = useCallback((request: PlaybackRequest) => playerRef.current?.play(request), []);
+  const play = useCallback((request: PlaybackRequest) => {
+    if (enabled && !document.hidden) playerRef.current?.play(request);
+  }, [enabled]);
   const stop = useCallback(() => playerRef.current?.stop(), []);
   const pause = useCallback(() => playerRef.current?.pause(), []);
-  const resume = useCallback(() => playerRef.current?.resume(), []);
+  const resume = useCallback(() => {
+    if (enabled && !document.hidden) playerRef.current?.resume();
+  }, [enabled]);
   useEffect(() => {
     if (!enabled) stop();
   }, [enabled, stop]);

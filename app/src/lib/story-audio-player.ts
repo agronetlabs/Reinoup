@@ -51,6 +51,19 @@ export const idlePlayback: PlaybackState = {
   activeCue: null,
 };
 
+let activePlayerStop: (() => void) | null = null;
+export function stopActiveStoryAudio() { activePlayerStop?.(); }
+
+export function attachAudioLifecycle(player: { stop(): void }, page: EventTarget, visibility: EventTarget & { hidden: boolean }) {
+  const onVisibility = () => { if (visibility.hidden) player.stop(); };
+  page.addEventListener('pagehide', player.stop);
+  visibility.addEventListener('visibilitychange', onVisibility);
+  return () => {
+    page.removeEventListener('pagehide', player.stop);
+    visibility.removeEventListener('visibilitychange', onVisibility);
+  };
+}
+
 export function createStoryAudioPlayer(
   createAudio: (url: string) => AudioSource,
   speech: SpeechSource | null,
@@ -69,6 +82,7 @@ export function createStoryAudioPlayer(
   };
 
   function stop() {
+    if (activePlayerStop === stop) activePlayerStop = null;
     generation++;
     releaseAudio();
     releaseAudio = () => {};
@@ -84,6 +98,8 @@ export function createStoryAudioPlayer(
   function play(request: PlaybackRequest) {
     if (disposed) throw new Error('Narration player is disposed');
     stop();
+    activePlayerStop?.();
+    activePlayerStop = stop;
     const { url, text, cues = [] } = request;
     const current = generation;
     const audio = url ? createAudio(url) : null;
@@ -93,6 +109,7 @@ export function createStoryAudioPlayer(
     const isCurrent = () => !disposed && current === generation;
     const finish = () => {
       if (!isCurrent()) return;
+      if (activePlayerStop === stop) activePlayerStop = null;
       releaseAudio();
       releaseAudio = () => {};
       speaking = false;
