@@ -29,7 +29,22 @@ export function StoryResult() {
       </p>
       <p className="text-white/70">Você concluiu "{story.title}"</p>
 
-      <div className="mt-6 flex w-full flex-col gap-3">
+      <div className="mt-4 flex w-full flex-col gap-3 text-left">
+        <section className="rounded-[var(--radius-card)] bg-white/10 p-4">
+          <h2 className="font-display text-lg font-extrabold text-gold-light">O que você aprendeu</h2>
+          <p className="mt-1 text-sm leading-relaxed text-white/90">{story.licao}</p>
+        </section>
+        <section className="rounded-[var(--radius-card)] bg-white/10 p-4">
+          <h2 className="font-display text-lg font-extrabold text-gold-light">Guarde no coração</h2>
+          <p className="mt-1 text-sm font-semibold leading-relaxed text-white/90">“{story.fraseMemoravel}”</p>
+        </section>
+        <section className="rounded-[var(--radius-card)] bg-white/10 p-4">
+          <h2 className="font-display text-lg font-extrabold text-gold-light">Oração</h2>
+          <p className="mt-1 text-sm leading-relaxed text-white/90">{story.oracao}</p>
+        </section>
+      </div>
+
+      <div className="mt-2 flex w-full flex-col gap-3">
         <Button full size="lg" onClick={() => navigate('/app/historias')}>
           Ver outras histórias
         </Button>
