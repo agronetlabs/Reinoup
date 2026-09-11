@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { choiceAudioSegments, AUDIO_PILOT_STORY_ID } from '../../../shared/story-audio-segments';
+import { StorySegmentAudio } from '../../components/ui/StorySegmentAudio';
+import { stopActiveStoryAudio } from '../../lib/story-audio-player';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
@@ -46,6 +49,7 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
   ageBand: AgeBand;
 }) {
   const navigate = useNavigate();
+  const reducedMotion = useReducedMotion();
   const completeChapter = useProgressStore((s) => s.completeChapter);
   const recordChoice = useProgressStore((s) => s.recordChoice);
   const { locked } = useAppLock();
@@ -55,9 +59,8 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
   const chapterIndex = Number(chapterIndexParam ?? 0);
   const chapter = story?.chapters[chapterIndex];
 
-  useEffect(() => stop(), [stop, chapter?.id, ageBand]);
-
   const [pageIndex, setPageIndex] = useState(0);
+  useEffect(() => stop(), [stop, chapter?.id, ageBand, pageIndex]);
   const [choiceIndex, setChoiceIndex] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [audioPage, setAudioPage] = useState<StoryAudioPage | null>(null);
@@ -95,6 +98,7 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
   }
 
   function handleNext() {
+    stopActiveStoryAudio();
     stop();
     if (pageIndex + 1 < totalSteps) {
       setPageIndex((p) => p + 1);
@@ -113,16 +117,20 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
       <div className="flex flex-1 flex-col px-4 pt-4">
         <AnimatePresence mode="wait">
           {!atChoiceStep ? (
-            <motion.div key={`page-${pageIndex}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4">
-              <Scene scene={chapter.scene} artId={chapter.id} showGuide height={220} />
+            <motion.div key={`page-${pageIndex}`} initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={reducedMotion ? { duration: 0 } : undefined} className="flex flex-col gap-4">
+              <Scene scene={chapter.scene} artId={chapter.id} height={220} />
               <h2 className="font-display text-center text-lg font-bold text-navy">{chapter.title}</h2>
               <p className="text-center text-lg leading-relaxed text-navy-deep">
                 <NarratedText text={pages[pageIndex]} cue={activeCue} />
               </p>
             </motion.div>
           ) : (
-            <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4">
+            <motion.div key="choice" initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={reducedMotion ? { duration: 0 } : undefined} className="flex flex-col gap-4">
               <h2 className="font-display text-center text-lg font-bold text-navy">{chapter.choice!.question}</h2>
+              {story.id === AUDIO_PILOT_STORY_ID && !revealed && <StorySegmentAudio
+                sources={choiceAudioSegments(story.id, chapter, ageBand)}
+                labels={['pergunta', ...chapter.choice!.options.map((_, i) => `opção ${i + 1}`)]}
+              />}
               <div className="flex flex-col gap-3">
                 {chapter.choice!.options.map((opt, i) => (
                   <ChoiceCard
@@ -132,6 +140,7 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
                     revealed={revealed && choiceIndex === i}
                     disabled={revealed}
                     onClick={() => {
+                      stopActiveStoryAudio();
                       setChoiceIndex(i);
                       setRevealed(true);
                     }}
@@ -145,6 +154,10 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
                   {chapter.choice!.options[choiceIndex].feedback}
                 </SpeechBubble>
               )}
+              {story.id === AUDIO_PILOT_STORY_ID && revealed && choiceIndex !== null && <StorySegmentAudio
+                sources={choiceAudioSegments(story.id, chapter, ageBand, choiceIndex)}
+                labels={['explicação']}
+              />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -175,7 +188,7 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
                 });
               }
             }}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange text-white shadow-[0_6px_0_0_var(--color-orange-dark)] transition active:scale-95"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange text-white shadow-[0_6px_0_0_var(--color-orange-dark)] transition active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
             aria-label={isPlaying ? 'Pausar narração' : isPaused ? 'Retomar narração' : 'Ouvir narração'}
             disabled={locked}
           >
@@ -200,7 +213,7 @@ function ChapterReaderSession({ storyId, chapterIndexParam, ageBand }: {
                 aria-valuemax={100}
                 aria-valuenow={Math.round(progress * 100)}
               >
-                <div className="h-full rounded-full bg-navy transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+                <div className="h-full rounded-full bg-navy transition-[width] duration-150 motion-reduce:transition-none" style={{ width: `${progress * 100}%` }} />
               </div>
             )}
           </div>

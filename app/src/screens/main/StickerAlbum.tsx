@@ -32,11 +32,14 @@ export function StickerAlbum() {
             return (
               <div
                 key={motif}
+                data-art-status={unlocked ? 'legacy-fallback' : undefined}
                 className={`flex aspect-square items-center justify-center rounded-2xl border-2 ${
                   unlocked ? 'border-gold bg-white' : 'border-navy/10 bg-navy/5'
                 }`}
               >
-                {unlocked ? <MotifIcon motif={motif} size={44} /> : <BrandIcon name="protecao" size={22} className="opacity-30" />}
+                {unlocked
+                  ? <MotifIcon motif={motif} size={44} />
+                  : <BrandIcon name="protecao" size={22} className="opacity-30" />}
               </div>
             );
           })}

@@ -75,19 +75,25 @@ por pertencer a outro projeto. Os 104 MP3 e seis manifestos foram movidos para
 `.local/withdrawn-leandro-audio`, fora de `public`, `dist` e do Git. A voz na
 ElevenLabs não foi excluída nem modificada.
 
-`shared/voice-policy.ts` mantém a lista de vozes autorizadas, atualmente vazia,
-e bloqueia a voz retirada. O gerador não possui mais voz padrão: exige
+`shared/voice-policy.ts` mantém autorizações por função, atualmente vazias,
+e bloqueia a voz retirada em todas elas. Cada autorização exige referências
+não sensíveis da permissão de uso no ReinoUp e do aceite humano da amostra.
+`APPROVED_VOICE_IDS` é a projeção das vozes aprovadas para narração; aprovar
+mascote ou explicações não autoriza usá-los como narrador.
+O gerador não possui mais voz padrão: exige
 `ELEVENLABS_VOICE_ID` aprovado antes de qualquer chamada paga. O leitor rejeita
 manifestos de vozes não autorizadas, inclusive em cache, e não tenta URLs MP3
 legadas sem manifesto aprovado. Usa somente a voz `pt-BR` do aparelho ou leitura
 silenciosa com mensagem. A nova versão do service worker limpa
 `story-narration-v1` na ativação; clientes antigos precisam atualizar o app.
 
-O áudio é estático, separado por história, faixa etária, capítulo e página. A geração usa o
-endpoint ElevenLabs **with timestamps**, grava os MP3s em `public/audio/stories/` e cria um
-`manifest.json` por história com duração, hash do texto e cues por palavra. O app só usa uma
-entrada cujo hash ainda corresponda ao conteúdo; manifesto/áudio ausente ou inválido cai
-automaticamente em `speechSynthesis`.
+O áudio é estático, separado por história, faixa etária e entrada narrável.
+A geração usa o endpoint ElevenLabs **with timestamps**, grava os MP3s em
+`public/audio/stories/` e cria um `manifest.json` por história. O formato v2
+guarda voz/função, modelo, parâmetros, duração, hash e cues por entrada;
+manifestos v1 das páginas continuam aceitos somente com voz autorizada e
+conteúdo válido. O app só usa uma entrada cujo hash corresponda ao texto
+atual; ausência ou invalidação mantém a alternativa pt-BR do aparelho.
 
 **Idioma obrigatório: português brasileiro nativo.** O fallback só usa uma voz
 identificada como `pt-BR` (preferencialmente local), nunca `pt-PT`, `pt` genérico
@@ -96,30 +102,176 @@ o leitor explica a indisponibilidade e continua permitindo a leitura silenciosa.
 O rótulo de idioma não certifica sotaque; a narração ElevenLabs exige aprovação
 de pronúncia, entonação e nomes bíblicos por escuta.
 
+### Cobertura audiovisual preparada para Adão e Eva
+
+Somente `gn-02-adao-eva` ganhou os controles adicionais de escuta para escolha,
+perguntas/opções/feedback do quiz e resumo (lição, frase e oração).
+Feedback só fica disponível após responder. A criança inicia cada reprodução;
+não há avanço automático. Trocar de trecho encerra o anterior, inclusive entre
+os blocos do resumo. Os controles usam o mesmo player das páginas, sem sobreposição.
+
+Inventário atual nas duas idades: **130 entradas = 16 páginas + 114 segmentos**,
+com **7.928 caracteres de texto**, não uma estimativa de créditos. Por faixa:
+8 páginas, 5 segmentos da escolha, 49 do quiz e 3 do resumo.
+`shared/story-audio-segments.ts` deriva os textos do conteúdo versionado.
+As páginas mantêm suas versões distintas por idade; textos interativos seguem
+a autoria compartilhada já existente. Isso é suporte local, não um lote gerado:
+a narração de estúdio permanece suspensa até aprovação e produção autorizada.
+
+### Avaliação das sugestões de voz — 2026-09-11
+
+O CSV do responsável sugere seis funções, não seis autorizações.
+Na [biblioteca pública oficial](https://elevenlabs.io/voice-library), os nomes
+abaixo correspondem a estas entradas. As descrições e o idioma principal
+foram conferidos nos metadados públicos da página; nomes homônimos podem
+identificar outras vozes. Nenhuma prévia foi regenerada ou incorporada ao app.
+
+| Função sugerida | Candidata / ID identificado | Resultado da triagem |
+|---|---|---|
+| Narração bíblica | Bell / ID não confirmado | Identidade, origem brasileira e direitos pendentes |
+| Narração bíblica | Sara Martin / `KHCvMklQZZo0O30ERnVn` | Descrita como espanhola castelhana (`es`); esta entrada não atende ao requisito nativo brasileiro |
+| Mascote | Peter — Youthful / `TumdjBNWanlT3ysvclWh` | Descrito como húngaro (`hu`); esta entrada não atende ao requisito. Há outros Peter no catálogo |
+| Explicações | Otani / `3JDquces8E8bkmvbh6Bc` | Descrito como japonês (`ja`); esta entrada não atende ao requisito |
+| Telas hero | Heart / ID não confirmado | Identidade, origem brasileira e direitos pendentes |
+| Desafios | Amelia / `ZF6FPAbjXT4488VcRRnw` | Descrita como britânica (`en`); esta entrada não atende ao requisito |
+| Momentos premium | Heart / ID não confirmado | Mesma pendência; avaliar voz não cria oferta, tela ou mudança de pagamento |
+
+**Alternativas para escuta, ainda não aprovadas:** a
+[página oficial de português](https://elevenlabs.io/text-to-speech/portuguese)
+oferece prévias existentes de
+[Yasmin Alves](https://elevenlabs.io/app/voice-library?voiceId=lWq4KDY8znfkV0DrK8Vb)
+(`lWq4KDY8znfkV0DrK8Vb`, descrita como artista vocal brasileira, suave e
+acolhedora) e
+[Will — Deep, Smooth and Affectionate](https://elevenlabs.io/app/voice-library?voiceId=CstacWqMhJQlnfLPxRG4)
+(`CstacWqMhJQlnfLPxRG4`, descrito para narração infantil brasileira).
+Ouvir as prévias existentes, sem acionar “Generate”, permite comparar antes
+de produzir uma amostra com o texto real. Descrição de catálogo não comprova
+sozinha sotaque, qualidade, exclusividade ou autorização para o ReinoUp.
+
+O responsável informou disponibilidade de **300 mil créditos diários** para
+produção. Essa informação não foi verificada na conta e não equivale a aprovação
+de uma voz ou amostra. Não presumir que créditos são exatamente caracteres:
+o custo depende do modelo e da voz. Registrar inventário e consumo real, sem
+tratar orçamento como bloqueio artificial.
+
+Segundo a [regra oficial de uso comercial](https://help.elevenlabs.io/hc/en-us/articles/13313564601361-Can-I-publish-the-content-I-generate-on-the-platform),
+o plano gratuito não concede licença comercial; planos pagos concedem licença
+para conteúdo gerado durante a assinatura, sujeita a direitos, termos e
+restrições do serviço, excluindo serviços beta. Confirmar a licença aplicável
+à voz escolhida e a autorização do responsável para este projeto.
+Uma prévia pública serve para escuta, não para redistribuição no app.
+
+Antes do lote: confirmar ID/função e autorização de uso, produzir amostra
+isolada somente quando autorizada, obter aceite humano explícito para
+pronúncia brasileira, nomes bíblicos, tom e ritmo, e só então cadastrar a
+autorização de produção. Nenhum nome desta seção deve entrar automaticamente
+em `APPROVED_VOICES`. Não reutilizar a voz pessoal retirada.
+Para a audição inicial, o operador pode gerar a amostra no painel do provedor
+e guardá-la fora de `public`/`dist` e do Git. Não contornar a política do
+gerador de lotes cadastrando uma voz ainda não aprovada só para obter a amostra.
+Configurar credenciais apenas no ambiente local apropriado, nunca na conversa.
+
+### Reprodução e geração
+
 No leitor, **Pausar** mantém o MP3, o tempo e a palavra destacada; **Retomar**
 continua a mesma reprodução. O fallback usa `speechSynthesis.pause/resume`,
 sujeito ao suporte do navegador. Navegar, mudar de faixa etária, ocultar a página
 ou bloquear o app encerra a reprodução, sem retomada automática.
 
-```bash
-# Não consome créditos:
-bun run audio:stories -- --dry-run --story gn-01-criacao --age 5-7
+Os dois comandos aceitam `--story`, `--season`, `--through-order` (com temporada),
+`--age`, `--chapter`, `--page` (com capítulo), `--scope all|pages|segments` e
+`--dry-run`. Seleções inválidas ou vazias falham explicitamente.
 
-# Geração real (comece sempre por uma história/faixa):
-ELEVENLABS_API_KEY=... ELEVENLABS_VOICE_ID=... \
-  bun run audio:stories -- --story gn-01-criacao --age 5-7 --chapter gn-01-c1 --page 1
+```powershell
+# Dentro de app/. Sem credenciais, rede ou escrita de arquivos:
+bun run audio:stories -- --dry-run --story gn-02-adao-eva
+bun run audio:validate -- --dry-run --story gn-02-adao-eva
+
+# Após geração autorizada, validar somente o piloto:
+bun run audio:validate -- --story gn-02-adao-eva
 ```
 
-`ELEVENLABS_MODEL_ID` é opcional (padrão `eleven_multilingual_v2`). `--force` regenera
-entradas atuais. Nunca versione a chave; somente MP3s e manifestos são publicáveis.
-Para um lote editorial limitado, use `--season genesis --through-order 6`; o gerador ignora
-páginas cujo hash, voz, modelo e parâmetros já estejam atuais. Valide os artefatos com:
+A geração real exige `ELEVENLABS_API_KEY` e IDs explicitamente aprovados por
+função: `ELEVENLABS_VOICE_ID` (narração), `ELEVENLABS_CHALLENGE_VOICE_ID`,
+`ELEVENLABS_EXPLANATION_VOICE_ID` e `ELEVENLABS_MASCOT_VOICE_ID`, conforme as
+entradas selecionadas. Uma voz pode exercer mais de uma função somente se cada
+uso tiver sido aprovado. Hero/premium estão na avaliação, não no lote do piloto.
+O gerador verifica as autorizações necessárias antes de qualquer chamada paga.
 
-```bash
-bun run audio:validate -- --season genesis --through-order 6
-```
+`ELEVENLABS_MODEL_ID` é opcional (padrão `eleven_multilingual_v2`). Não usar
+`language_code` como suposta garantia de sotaque nesse modelo.
+O gerador aceita `--force`, mas não deve ser usado para regenerar narrador já
+aprovado só porque foi acrescentado um guia. `--scope segments` preserva páginas
+válidas/autorizadas e atualiza a estrutura de manifesto sem regenerá-las.
+Entradas com hash, voz, modelo e parâmetros atuais são reutilizadas.
+Sem `--dry-run`, o comando de geração consome créditos: executá-lo somente
+após os aceites; não ampliar para outras histórias nesta etapa.
 
 ## Limitações conhecidas
+
+### Cards 3D do piloto
+
+A direção visual é completar os cards da jornada Adão e Eva com ilustração
+3D original no acabamento da capa Sunburst, antes de expandir para as demais
+telas. O padrão é obrigatório para **todas** as imagens de cards, capas e cenas
+de leitura, sem exceção: inclui Criação, Caim e Abel, histórias bloqueadas,
+quiz, escolha, jogos, desafios e recompensas. Os desenhos planos ainda exibidos
+são pendências de migração, não versões finais aprovadas; aplicar sombras ou
+converter o arquivo não substitui produzir a ilustração 3D.
+Rasters novos exigem aprovação por registro, não somente extensão WebP.
+Enquanto faltam as substituições, as figuras legíveis existentes continuam como
+fallback transitório: o quiz e a memória não podem exibir todas as alternativas
+com o mesmo aviso, nem o quebra-cabeça perder a cena de referência.
+As áreas de arte usam `data-art-status` para distinguir `approved-3d` de
+`legacy-fallback`, sem declarar concluída a migração visual.
+O primeiro lote autorizado para **amostras** contém apenas as quatro
+alternativas de `gn-02-q2`: árvore com fruto, pão, água de rio e alimento animal.
+O mascote oficial de boné, a capa, as cenas existentes e os SVGs de fallback
+permanecem preservados. As quatro amostras da primeira rodada foram geradas
+em área privada, mas ainda não estão aprovadas nem integradas ao app.
+
+O afinamento DisneyClub3D aproveita somente o estilo do documento externo:
+formas arredondadas, materiais macios/foscos, luz difusa e fundos simples,
+com menos textura fotográfica. Não modifica as aulas, textos, perguntas,
+roadmap ou mascote. `scripts/lib/story-art-style.mjs` compartilha a direção
+entre os três geradores de arte; dry-runs e novos registros de geração
+identificam a revisão `disneyclub3d-stylized-v2`. Os arquivos e recibos da
+primeira rodada permanecem intactos, sem receber retroativamente essa revisão.
+WebP e filtragem de URL não certificam estilo: o aceite exige olhar as imagens
+em tamanho de card, conferir legibilidade e comparar o conjunto.
+
+`shared/quiz-card-art.ts` registra os quatro temas e as aprovações visuais
+separadamente. `getApprovedQuizCardArt` só fornece uma imagem ao card após uma
+aprovação explícita com referência; sem isso, mantém a apresentação existente
+sem solicitar URLs de arquivos ainda inexistentes. `ChoiceCard` aceita imagem
+grande acima do texto; se um arquivo aprovado falhar, informa a indisponibilidade
+e mantém texto e figura de fallback, sem bloquear a resposta da criança.
+
+O gerador usa o **mesmo provedor e modelo do piloto** (`gpt-image-2.5-sunburst`),
+com a capa WebP versionada como referência de acabamento. Não exige os originais
+privados de outra sessão e não acessa a quarentena de áudio.
+
+```bash
+# Dentro de app/. Não consome créditos nem escreve imagens:
+bun scripts/generate-gn02-quiz-art.mjs --dry-run
+
+# Somente após autorização do lote e configuração segura de OPENAI_API_KEY:
+bun scripts/generate-gn02-quiz-art.mjs --generate --asset gn-02-q2-pao
+```
+
+Sem `--asset`, `--generate` solicita as quatro imagens do lote. O script
+guarda originais, WebPs e registros em `../.local/gn02-quiz-art/`, ignorado pelo
+Git. Nunca publica em `public` nem aprova uma imagem automaticamente.
+Não repete pedidos registrados, inclusive após interrupção, pois já podem ter
+sido cobrados. Inspecionar o pedido no provedor antes de decidir qualquer repetição.
+Não há troca automática de modelo em caso de indisponibilidade.
+Uma mudança de prompt também não libera repetição: não remover os registros
+da primeira rodada para forçar outra cobrança.
+
+Depois da aprovação visual humana, copiar somente os WebPs aceitos para
+`public/story-art/genesis/gn-02/quiz/` e registrar seus IDs/referências em
+`APPROVED_QUIZ_CARD_ART`; só então validar o card em tela pequena e publicar
+em uma etapa autorizada. Créditos da ElevenLabs não cobrem geração OpenAI.
 
 ### Configuração do Cordeirinho na ElevenLabs
 
@@ -127,8 +279,10 @@ bun run audio:validate -- --season genesis --through-order 6
 em 2026-09-11, com autorização do responsável pelo projeto. A configuração remota
 foi relida: idioma `pt-br`, saudação brasileira e instruções do guia infantil.
 Após a retirada da voz pelo titular, outra atualização desabilitou a fala
-(`text_only=true`) e proibiu o cliente de sobrescrever esse modo. O app não abre
-uma sessão do SDK enquanto não houver voz aprovada. O limite de 300 segundos foi
+(`text_only=true`) e proibiu o cliente de sobrescrever esse modo. O app mantém
+`LIVE_CONVERSATION_ENABLED=false`: não monta o provedor de conversa e também
+bloqueia o início da sessão, independentemente das vozes estáticas aprovadas.
+Cadastrar um narrador não libera microfone nem conversa. O limite de 300 segundos foi
 preservado. Antes de reativar, substituir a voz no agente remoto e conferir o ID
 contra a política do projeto; não basta habilitar o botão.
 

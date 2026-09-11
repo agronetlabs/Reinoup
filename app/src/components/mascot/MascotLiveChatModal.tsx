@@ -5,7 +5,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { MascotOficial } from './MascotOficial';
 import { BrandIcon } from '../illustrations/BrandIcon';
-import { APPROVED_VOICE_IDS } from '../../../shared/voice-policy';
+import { LIVE_CONVERSATION_ENABLED } from '../../../shared/voice-policy';
 
 const DEFAULT_AGENT_ID = 'agent_9001k156nw8yfhq827h291a9d2qp';
 
@@ -51,6 +51,10 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
   const { startSession, endSession } = conversation;
   const handleStart = useCallback(() => {
     setErrorMsg(null);
+    if (!LIVE_CONVERSATION_ENABLED) {
+      setErrorMsg('A conversa por voz ainda não está disponível.');
+      return;
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       setErrorMsg('O microfone não está disponível. Abra o ReinoUp em um navegador com conexão segura.');
       return;
@@ -188,7 +192,7 @@ function LiveChatSession({ onClose, agentId = DEFAULT_AGENT_ID }: { onClose: () 
 export function MascotLiveChatModal({ open, onClose, agentId }: MascotLiveChatModalProps) {
   return (
     <Modal open={open} onClose={onClose}>
-      {open && APPROVED_VOICE_IDS.length === 0 && (
+      {open && !LIVE_CONVERSATION_ENABLED && (
         <div className="flex flex-col items-center gap-4 text-center">
           <MascotOficial size={100} />
           <h2 className="font-display text-xl font-bold text-navy">A voz do Cordeirinho está em preparação</h2>
@@ -196,7 +200,7 @@ export function MascotLiveChatModal({ open, onClose, agentId }: MascotLiveChatMo
           <Button full onClick={onClose}>Continuar aprendendo</Button>
         </div>
       )}
-      {open && APPROVED_VOICE_IDS.length > 0 && <ConversationProvider>
+      {open && LIVE_CONVERSATION_ENABLED && <ConversationProvider>
         <LiveChatSession onClose={onClose} agentId={agentId} />
       </ConversationProvider>}
     </Modal>

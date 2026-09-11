@@ -99,6 +99,7 @@ export function MemoryGame() {
                       ?
                     </div>
                     <div
+                      data-art-status="legacy-fallback"
                       className="absolute inset-0 flex items-center justify-center rounded-xl bg-white p-1 [backface-visibility:hidden]"
                       style={{ transform: 'rotateY(180deg)' }}
                     >
