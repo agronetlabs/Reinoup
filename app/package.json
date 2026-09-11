@@ -15,7 +15,7 @@
     "audio:stories": "bun scripts/generate-story-audio.mjs",
     "audio:validate": "bun scripts/validate-story-audio.mjs",
     "test:payments": "bun test tests/payments.test.ts",
-    "test:app": "bun test tests/story-audio.test.ts tests/story-audio-segments.test.ts tests/voice-policy.test.ts tests/quiz-card-art.test.tsx tests/gameplay.test.ts tests/gameplay-progress.test.ts tests/activity-report.test.ts tests/brand-assets.test.ts tests/story-art.test.ts",
+    "test:app": "bun test tests/story-audio.test.ts tests/story-audio-segments.test.ts tests/voice-policy.test.ts tests/quiz-card-art.test.tsx tests/gameplay.test.ts tests/gameplay-progress.test.ts tests/activity-report.test.ts tests/brand-assets.test.ts tests/story-art.test.ts tests/story-3d-catalog.test.ts",
     "test:stripe:sandbox": "bun scripts/test-stripe-sandbox.ts",
     "check:payments": "tsc -p tsconfig.functions.json && bun run test:payments",
     "check": "bun run check:bun && bun run lint && bun run check:conteudo && bun run check:payments && bun run test:app && bun run build:fast",
