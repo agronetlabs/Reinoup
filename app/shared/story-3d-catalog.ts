@@ -28,7 +28,7 @@ export const GENESIS_3D_CATALOG: readonly Story3DAssetSpec[] = [
       'Leave ample clear area at bottom and top for interface overlay.',
     ],
     dimensions: { width: 1200, height: 800 },
-    targetPath: 'story-art/genesis/gn-01/cover.webp',
+    targetPath: '/generated-1789149714768-9qjjj.png',
   },
   {
     id: 'gn-01-c1',
