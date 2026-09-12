@@ -14,6 +14,7 @@ import { PageTransition } from '../../components/ui/PageTransition';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const audience = useAuthStore((s) => s.audience);
   const familyId = useAuthStore((s) => s.familyId);
   const childProfile = useAuthStore((s) => s.childProfile);
   const ensureFreshDaily = useProgressStore((s) => s.ensureFreshDaily);
@@ -36,7 +37,9 @@ export function AppLayout() {
   // Sync do progresso: sobe quando há conta remota, e é inerte sem ela.
   useEffect(() => iniciarSync(), [familyId, childProfile]);
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to={audience === 'crianca' ? '/onboarding-crianca' : '/login'} replace />;
+  }
   if (!childProfile) return <Navigate to="/onboarding-crianca" replace />;
 
   return (

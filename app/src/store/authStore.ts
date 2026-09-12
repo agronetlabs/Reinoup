@@ -93,7 +93,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isAuthenticated: false, isAdmin: false });
       },
 
-      completeChildOnboarding: (profile) => set({ childProfile: profile }),
+      completeChildOnboarding: (profile) => set({ childProfile: profile, isAuthenticated: true }),
 
       setParentPin: (pin) => set({ parentPinHash: simpleHash(pin) }),
 

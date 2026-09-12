@@ -10,7 +10,7 @@ export function AudiencePicker() {
 
   function choose(a: 'crianca' | 'pai') {
     setAudience(a);
-    navigate('/login');
+    navigate(a === 'crianca' ? '/onboarding-crianca' : '/login');
   }
 
   return (
