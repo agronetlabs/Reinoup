@@ -3,6 +3,7 @@ import { Splash } from './screens/onboarding/Splash';
 import { AudiencePicker } from './screens/onboarding/AudiencePicker';
 import { Login } from './screens/onboarding/Login';
 import { Register } from './screens/onboarding/Register';
+import { AdminLogin } from './screens/onboarding/AdminLogin';
 import { ChildOnboarding } from './screens/onboarding/ChildOnboarding';
 
 import { AppLayout } from './screens/main/AppLayout';
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
   { path: '/publico', element: <AudiencePicker /> },
   { path: '/login', element: <Login /> },
   { path: '/criar-conta', element: <Register /> },
+  { path: '/admin', element: <AdminLogin /> },
   { path: '/onboarding-crianca', element: <ChildOnboarding /> },
 
   {

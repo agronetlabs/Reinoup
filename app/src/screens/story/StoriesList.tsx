@@ -9,11 +9,13 @@ import { useAssinatura } from '../../lib/assinatura';
 import { SEASONS, SEASON_ORDER } from '../../content/seasons';
 import { VALORES } from '../../content/valores';
 import { useProgressStore } from '../../store/progressStore';
+import { useAuthStore } from '../../store/authStore';
 
 export function StoriesList() {
   const stories = useProgressStore((s) => s.stories);
   const completedIds = new Set(Object.keys(stories).filter((id) => stories[id]?.completed));
   const { plano } = useAssinatura();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
 
   return (
     <div className="flex min-h-screen flex-col bg-cream pb-6">
@@ -50,7 +52,7 @@ export function StoriesList() {
                     {doBloco.map((story) => {
                       const progress = stories[story.id];
                       const pct = (progress?.chaptersCompleted ?? 0) / story.chapters.length;
-                      const bloqueio = motivoDeBloqueio(story, completedIds, Boolean(plano));
+                      const bloqueio = motivoDeBloqueio(story, completedIds, Boolean(plano), isAdmin);
                       const unlocked = bloqueio === null;
                       const valor = VALORES[story.valor];
 

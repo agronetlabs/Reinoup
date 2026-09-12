@@ -7,6 +7,7 @@ import { Scene } from '../../components/illustrations/Scene';
 import { getStory, motivoDeBloqueio } from '../../content/stories';
 import { useAssinatura } from '../../lib/assinatura';
 import { useProgressStore } from '../../store/progressStore';
+import { useAuthStore } from '../../store/authStore';
 
 export function StoryCover() {
   const { storyId } = useParams<{ storyId: string }>();
@@ -15,6 +16,7 @@ export function StoryCover() {
   const progress = useProgressStore((s) => (storyId ? s.stories[storyId] : undefined));
   const stories = useProgressStore((s) => s.stories);
   const { plano, carregando } = useAssinatura();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
 
   const story = storyId ? getStory(storyId) : undefined;
   if (!story) return <Navigate to="/app/historias" replace />;
@@ -22,7 +24,7 @@ export function StoryCover() {
   // A trava também vive aqui, não só na lista: sem isso, digitar a URL da fase
   // pularia o paywall e a sequência inteira.
   const completedIds = new Set(Object.keys(stories).filter((id) => stories[id]?.completed));
-  const bloqueio = motivoDeBloqueio(story, completedIds, Boolean(plano));
+  const bloqueio = motivoDeBloqueio(story, completedIds, Boolean(plano), isAdmin);
   if (!carregando && bloqueio === 'assinatura') return <Navigate to="/app/planos" replace />;
   if (bloqueio === 'sequencia') return <Navigate to="/app/historias" replace />;
 

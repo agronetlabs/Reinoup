@@ -22,9 +22,12 @@ interface AuthState {
   parentPinHash: string | null;
   /** id do responsavel no Supabase = family_id. Null no modo 100% local. */
   familyId: string | null;
+  /** Privilégio admin: desbloqueia todas as histórias. Validado no banco. */
+  isAdmin: boolean;
 
   setAudience: (a: Audience) => void;
   setFamilyId: (id: string | null) => void;
+  setAdmin: (v: boolean) => void;
   register: (email: string, password: string) => { ok: boolean; error?: string };
   login: (email: string, password: string) => { ok: boolean; error?: string };
   mockSocialLogin: (provider: 'google' | 'apple') => void;
@@ -45,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
       childProfile: null,
       parentPinHash: null,
       familyId: null,
+      isAdmin: false,
 
       setAudience: (a) => set({ audience: a }),
 
@@ -60,6 +64,8 @@ export const useAuthStore = create<AuthState>()(
        * tabelas. Amarra pagamento e progresso à conta certa.
        */
       setFamilyId: (id) => set({ familyId: id }),
+
+      setAdmin: (v) => set({ isAdmin: v }),
 
       login: (email, password) => {
         const state = get();
@@ -84,7 +90,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         lockParentArea();
-        set({ isAuthenticated: false });
+        set({ isAuthenticated: false, isAdmin: false });
       },
 
       completeChildOnboarding: (profile) => set({ childProfile: profile }),

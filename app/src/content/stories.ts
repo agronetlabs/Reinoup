@@ -52,8 +52,11 @@ export type MotivoDeBloqueio = 'sequencia' | 'assinatura';
 /**
  * Em temporada sequencial, a fase N+1 abre quando a N é concluída.
  * A primeira fase de cada temporada está sempre aberta.
+ * Admin bypassa a sequência.
  */
-export function isStoryUnlocked(story: Story, completedIds: Set<string>): boolean {
+export function isStoryUnlocked(story: Story, completedIds: Set<string>, isAdmin = false): boolean {
+  if (isAdmin) return true;
+
   const season = SEASONS[story.seasonId];
   if (!season.sequencial) return true;
 
@@ -73,8 +76,11 @@ export function isStoryUnlocked(story: Story, completedIds: Set<string>): boolea
 export function motivoDeBloqueio(
   story: Story,
   completedIds: Set<string>,
-  temPlanoAtivo: boolean
+  temPlanoAtivo: boolean,
+  isAdmin = false
 ): MotivoDeBloqueio | null {
+  if (isAdmin) return null;
+
   if (!isStoryUnlocked(story, completedIds)) return 'sequencia';
 
   if (temPlanoAtivo) return null;

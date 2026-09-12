@@ -77,3 +77,16 @@ export async function familyIdDaSessao(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   return data.session?.user.id ?? null;
 }
+
+/**
+ * Verifica se o usuário autenticado tem privilégio de administrador.
+ *
+ * A checagem acontece no banco via `is_admin_session()` (SECURITY DEFINER),
+ * então não basta o cliente fingir — o servidor confirma olhando a coluna
+ * `is_admin` em `families`.
+ */
+export async function verificarAdmin(): Promise<boolean> {
+  if (!supabase) return false;
+  const { data } = await supabase.rpc('is_admin_session');
+  return data === true;
+}
