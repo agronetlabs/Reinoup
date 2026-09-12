@@ -73,7 +73,7 @@ export function AdminLogin() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@reinoup.app"
+              placeholder="admin@reinoup.com"
               className="mt-1 w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3.5 text-white placeholder:text-white/40 outline-none focus:border-orange"
             />
           </label>
