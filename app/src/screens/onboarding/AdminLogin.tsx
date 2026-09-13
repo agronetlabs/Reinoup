@@ -19,6 +19,7 @@ export function AdminLogin() {
   const register = useAuthStore((s) => s.register);
   const setFamilyId = useAuthStore((s) => s.setFamilyId);
   const setAdmin = useAuthStore((s) => s.setAdmin);
+  const completeChildOnboarding = useAuthStore((s) => s.completeChildOnboarding);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export function AdminLogin() {
     setFamilyId(remoto.familyId ?? null);
     setAdmin(true);
     register(email, password);
+    completeChildOnboarding({ name: 'Admin', age: 9, ageBand: '8-10', avatarSeed: 'admin' });
     setCarregando(false);
     navigate('/app/historias', { replace: true });
   }

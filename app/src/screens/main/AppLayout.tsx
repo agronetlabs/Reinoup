@@ -14,6 +14,7 @@ import { PageTransition } from '../../components/ui/PageTransition';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const audience = useAuthStore((s) => s.audience);
   const familyId = useAuthStore((s) => s.familyId);
   const childProfile = useAuthStore((s) => s.childProfile);
@@ -40,7 +41,7 @@ export function AppLayout() {
   if (!isAuthenticated) {
     return <Navigate to={audience === 'crianca' ? '/onboarding-crianca' : '/login'} replace />;
   }
-  if (!childProfile) return <Navigate to="/onboarding-crianca" replace />;
+  if (!childProfile && !isAdmin) return <Navigate to="/onboarding-crianca" replace />;
 
   return (
     <div className="relative mx-auto flex min-h-screen max-w-md flex-col bg-cream">
